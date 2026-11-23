@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Sora } from "next/font/google";
 import { THEME_INIT_SCRIPT } from "@/components/gr/theme";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 // All fonts: latin subset, swap, automatic size-adjusted fallback => no layout shift.
@@ -12,10 +13,8 @@ const jetbrains = JetBrains_Mono({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: { default: "GitRepos: trending GitHub repositories", template: "%s · GitRepos" },
   description:
     "Hand-picked and data-ranked GitHub repositories, updated hourly from GH Archive. From the team behind @gitrepos.si.",

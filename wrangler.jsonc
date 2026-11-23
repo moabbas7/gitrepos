@@ -23,8 +23,8 @@
     {
       "binding": "DB",
       "database_name": "gitrepos",
-      // Replace with the id printed by `npx wrangler d1 create gitrepos` (see README).
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // From `npx wrangler d1 create gitrepos`. An identifier, not a credential.
+      "database_id": "b511d7a1-1b38-4a21-983b-426bb16f6a5c",
       "migrations_dir": "migrations"
     }
   ],

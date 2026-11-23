@@ -136,7 +136,7 @@ Add `?theme=light` to any URL to preview light mode.
    ```
 
    - If your account has no `workers.dev` subdomain yet, Cloudflare asks you to pick one.
-   - The site is then at `https://gitrepos.<subdomain>.workers.dev`.
+   - The site is then at `https://gitrepos.<subdomain>.workers.dev`. Ours is <https://gitrepos.gitrepos.workers.dev>.
 
 ### 3. GitHub token (optional but recommended)
 
@@ -162,7 +162,7 @@ In the repo, go to **Settings → Secrets and variables → Actions**.
 
 | Variable (optional) | Default |
 |---|---|
-| `NEXT_PUBLIC_SITE_URL` | `https://gitrepos.<subdomain>.workers.dev` |
+| `NEXT_PUBLIC_SITE_URL` | `https://gitrepos.gitrepos.workers.dev` (set this once you add a custom domain) |
 | `D1_DAILY_WRITE_BUDGET` | `80000` |
 | `TRACKED_LIMIT` | `5000` |
 | `MAX_PREBUILT_REPOS` | `5000` |
