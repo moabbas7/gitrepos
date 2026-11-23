@@ -1,0 +1,77 @@
+name: hourly (ingest → rank → build → deploy)
+
+on:
+  schedule:
+    - cron: "17 * * * *" # off the top of the hour, when Actions is least loaded
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Build and deploy the site after ranking"
+        type: boolean
+        default: true
+
+# Every workflow that writes the data branch shares this group, so writes never overlap.
+concurrency:
+  group: data-branch
+  cancel-in-progress: false
+
+permissions:
+  contents: write # push the data branch (never main)
+
+env:
+  # Prefer a PAT (5,000 GraphQL points/h); fall back to the built-in token (1,000 points/h per repo).
+  GITHUB_TOKEN: ${{ secrets.GH_PAT || github.token }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
+  D1_DAILY_WRITE_BUDGET: ${{ vars.D1_DAILY_WRITE_BUDGET || '80000' }}
+  TRACKED_LIMIT: ${{ vars.TRACKED_LIMIT || '5000' }}
+  MAX_PREBUILT_REPOS: ${{ vars.MAX_PREBUILT_REPOS || '5000' }}
+  NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+  DATA_PUSH: "1"
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
+      - name: Ingest GH Archive
+        id: ingest
+        run: npm run job:ingest
+        continue-on-error: true # a GH Archive outage must not stop ranking (rank falls back to Search)
+
+      - name: Rank
+        id: rank
+        run: npm run job:rank
+
+      - name: Publish data branch
+        if: always() && steps.ingest.outcome != 'skipped'
+        run: npx tsx jobs/data.ts publish "hourly $(date -u +%Y-%m-%dT%H:%MZ)"
+
+      # ---- Build + deploy (skipped until Cloudflare secrets exist) ----
+      - name: Restore star-history cache
+        if: env.CLOUDFLARE_API_TOKEN != '' && (github.event_name == 'schedule' || inputs.deploy)
+        uses: actions/cache@v4
+        with:
+          path: .data/history-*.json
+          key: history-${{ github.run_id }}
+          restore-keys: history-
+
+      - name: Build snapshot
+        if: env.CLOUDFLARE_API_TOKEN != '' && (github.event_name == 'schedule' || inputs.deploy)
+        run: npm run build:snapshot
+
+      - name: Build site (OpenNext)
+        if: env.CLOUDFLARE_API_TOKEN != '' && (github.event_name == 'schedule' || inputs.deploy)
+        run: |
+          # Inject the real D1 id (kept out of git) into wrangler.jsonc for this build only.
+          sed -i "s/00000000-0000-0000-0000-000000000000/${D1_DATABASE_ID}/" wrangler.jsonc
+          npm run cf:build
+          npm run cf:check
+
+      - name: Deploy to Cloudflare Workers
+        if: env.CLOUDFLARE_API_TOKEN != '' && (github.event_name == 'schedule' || inputs.deploy)
+        run: npx opennextjs-cloudflare deploy

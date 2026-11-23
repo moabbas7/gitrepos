@@ -1,0 +1,22 @@
+name: Setup
+description: Node + deps + data branch worktree
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24
+        cache: npm
+    - run: npm ci --no-audit --no-fund
+      shell: bash
+    - name: Attach data branch
+      run: npx tsx jobs/data.ts checkout
+      shell: bash
+    - name: Ephemeral local D1 (until Cloudflare secrets are configured)
+      # Lets the pipeline keep building star history on the data branch before D1 is connected.
+      run: |
+        if [ -z "${CLOUDFLARE_API_TOKEN}" ] || [ -z "${D1_DATABASE_ID}" ]; then
+          echo "::notice::Cloudflare secrets not set: using a throwaway local D1 for this run"
+          npx wrangler d1 migrations apply gitrepos --local
+        fi
+      shell: bash

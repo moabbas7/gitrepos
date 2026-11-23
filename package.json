@@ -16,7 +16,14 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "db:migrate": "wrangler d1 migrations apply gitrepos --local",
     "db:migrate:remote": "wrangler d1 migrations apply gitrepos --remote",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "job:ingest": "tsx jobs/ingest-gharchive.ts",
+    "job:rank": "tsx jobs/rank.ts",
+    "job:metadata": "tsx jobs/refresh-metadata.ts",
+    "job:snapshot": "tsx jobs/snapshot.ts",
+    "job:prune": "tsx jobs/rollup-and-prune.ts",
+    "job:summaries": "tsx jobs/summaries.ts",
+    "build:snapshot": "tsx scripts/build-snapshot.ts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.18",

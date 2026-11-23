@@ -39,7 +39,7 @@ export interface RepoMeta {
   spam?: SpamVerdict;
 }
 
-/** Per-hour star counts: repo id -> [full name, stars in that hour]. */
+/** Per-hour sampled WatchEvent counts (GH Archive): repo id -> [full name, events]. */
 export type HourCounts = Map<number, { name: string; count: number }>;
 
 export interface HourFile {
@@ -49,12 +49,15 @@ export interface HourFile {
   repos: Record<string, [string, number]>;
 }
 
+/** True daily star gains (from star history) for tracked repos with >= minStars that day. */
 export interface DailyFile {
-  v: 1;
+  v: 2;
   date: string; // YYYY-MM-DD
   minStars: number;
-  hoursCovered: number; // 24 when complete
-  repos: Record<string, [string, number]>;
+  /** Repos whose history covered the day (whether or not they reached minStars). */
+  reposCovered: number;
+  /** id -> [full name, stars gained that day, total stars at end of day] */
+  repos: Record<string, [string, number, number]>;
 }
 
 export type MetaCache = Record<string, RepoMeta>;

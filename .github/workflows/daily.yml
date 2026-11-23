@@ -1,0 +1,44 @@
+name: daily (snapshot → rollup-and-prune → summaries)
+
+on:
+  schedule:
+    - cron: "20 1 * * *" # after the 00:41 metadata refresh, so star history covers midnight
+  workflow_dispatch:
+
+concurrency:
+  group: data-branch
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GH_PAT || github.token }}
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.5-flash-lite' }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
+  D1_DAILY_WRITE_BUDGET: ${{ vars.D1_DAILY_WRITE_BUDGET || '80000' }}
+  MIN_DAILY_STARS: ${{ vars.MIN_DAILY_STARS || '3' }}
+  SUMMARY_LIMIT: ${{ vars.SUMMARY_LIMIT || '40' }}
+  DATA_PUSH: "1"
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Snapshot
+        run: npm run job:snapshot
+      - name: Rollup and prune
+        if: always()
+        run: npm run job:prune
+      - name: Summaries (Gemini + template fallback; never fails the run)
+        if: always()
+        run: npm run job:summaries
+      - name: Publish data branch
+        if: always()
+        run: npx tsx jobs/data.ts publish "daily $(date -u +%Y-%m-%d)"
