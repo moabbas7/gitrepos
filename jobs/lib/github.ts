@@ -19,6 +19,14 @@ export interface GithubOptions {
   log?: (...a: unknown[]) => void;
 }
 
+/** GitHub answered 502/504: the query took longer than GitHub's 10 s limit (not a rate limit). */
+export class GraphQLTimeoutError extends Error {
+  constructor(public status: number) {
+    super(`GitHub GraphQL timed out (HTTP ${status})`);
+    this.name = "GraphQLTimeoutError";
+  }
+}
+
 export class RateLimitedError extends Error {
   constructor(public resetAt: string) {
     super(`GitHub rate limit exhausted until ${resetAt}`);
@@ -82,7 +90,17 @@ export class GitHub {
         headers: this.headers({ "Content-Type": "application/json" }),
         body: JSON.stringify({ query, variables }),
       });
-      if (res.status === 403 || res.status === 429 || res.status === 502 || res.status === 504) {
+      // 502/504 = query timeout (GitHub stops at 10 s). Retry quickly; callers split the batch if it persists.
+      if (res.status === 502 || res.status === 504) {
+        await res.body?.cancel();
+        if (attempt < 2) {
+          this.log(`[github] GraphQL timeout (HTTP ${res.status}), retrying in ${3 * 2 ** attempt}s`);
+          await this.sleep(3000 * 2 ** attempt);
+          continue;
+        }
+        throw new GraphQLTimeoutError(res.status);
+      }
+      if (res.status === 403 || res.status === 429) {
         if (await this.backoff(res, attempt)) continue;
         throw new RateLimitedError(new Date(Date.now() + MAX_WAIT_MS).toISOString());
       }
@@ -111,10 +129,15 @@ export class GitHub {
    * Fetches metadata for up to 100 repos per query by owner/name. Repos that no longer exist or
    * whose databaseId changed (name reused) come back as { missing: true }.
    */
-  async fetchRepos(refs: { id: number; fullName: string }[], batchSize = 100): Promise<Map<number, RepoMeta>> {
+  async fetchRepos(refs: { id: number; fullName: string }[], batchSize = 50): Promise<Map<number, RepoMeta>> {
     const out = new Map<number, RepoMeta>();
-    for (let i = 0; i < refs.length; i += batchSize) {
-      const chunk = refs.slice(i, i + batchSize);
+    for (let i = 0; i < refs.length; i += batchSize) await this.fetchRepoBatch(refs.slice(i, i + batchSize), out);
+    return out;
+  }
+
+  /** One GraphQL query; on a persistent timeout the batch is split in half (down to 5 repos). */
+  private async fetchRepoBatch(chunk: { id: number; fullName: string }[], out: Map<number, RepoMeta>): Promise<void> {
+    {
       const vars: Record<string, string> = {};
       const decl: string[] = [];
       const fields = chunk
@@ -136,7 +159,19 @@ export class GitHub {
         stargazerCount forkCount issues(states: OPEN) { totalCount } watchers { totalCount }
         licenseInfo { spdxId } homepageUrl createdAt pushedAt isArchived isFork isEmpty isPrivate
       }`;
-      const res = await this.graphql<Record<string, RawRepo | null>>(query, vars);
+      let res;
+      try {
+        res = await this.graphql<Record<string, RawRepo | null>>(query, vars);
+      } catch (e) {
+        if (e instanceof GraphQLTimeoutError && chunk.length > 5) {
+          const mid = Math.ceil(chunk.length / 2);
+          this.log(`[github] splitting a timed-out batch of ${chunk.length}`);
+          await this.fetchRepoBatch(chunk.slice(0, mid), out);
+          await this.fetchRepoBatch(chunk.slice(mid), out);
+          return;
+        }
+        throw e;
+      }
       const now = new Date().toISOString();
       chunk.forEach((r, j) => {
         const raw = res.data?.[`r${j}`];
@@ -146,7 +181,6 @@ export class GitHub {
         } else out.set(r.id, mapRepo(raw, now));
       });
     }
-    return out;
   }
 
   /** Newest stargazers with account creation dates, for the spam guard. 10 repos per query. */

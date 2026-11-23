@@ -5,7 +5,8 @@
  *  - inserts are multi-row and chunked to D1's 100-parameter limit.
  */
 import type { Db, SqlValue, Statement } from "@/lib/db/types";
-import { chunkedInsert, D1_MAX_PARAMS } from "./sql";
+import { inClauseChunks, placeholders } from "@/lib/db/limits";
+import { chunkedInsert } from "./sql";
 import type { Gains, RepoMeta } from "./types";
 
 export interface RepoUpsert {
@@ -85,10 +86,9 @@ export function changedColumns(existing: ExistingRow, next: Record<Mutable, SqlV
 
 export async function loadExisting(db: Db, ids: number[]): Promise<Map<number, ExistingRow>> {
   const out = new Map<number, ExistingRow>();
-  for (let i = 0; i < ids.length; i += D1_MAX_PARAMS) {
-    const chunk = ids.slice(i, i + D1_MAX_PARAMS);
+  for (const chunk of inClauseChunks(ids)) {
     const rows = await db.all<ExistingRow>(
-      `SELECT id, full_name, ${MUTABLE.join(", ")} FROM repos WHERE id IN (${chunk.map(() => "?").join(",")})`,
+      `SELECT id, full_name, ${MUTABLE.join(", ")} FROM repos WHERE id IN (${placeholders(chunk)})`,
       chunk,
     );
     for (const r of rows) out.set(r.id, r);

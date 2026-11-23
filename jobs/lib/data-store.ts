@@ -5,7 +5,9 @@
  *   daily/YYYY-MM-DD.json.gz           daily totals, repos with >= MIN_DAILY_STARS (kept 35d)
  *   meta/repos.json.gz                 candidate metadata cache + spam verdicts
  *
- * CI: the branch is checked out as a git worktree at DATA_DIR. `publish()` replaces the branch
+ * CI: the branch is checked out as a git worktree at DATA_DIR (fetched anonymously — the repo is
+ * public). The push authenticates explicitly with DATA_PUSH_TOKEN (the workflow's built-in token),
+ * so it doesn't depend on how actions/checkout persists credentials. `publish()` replaces the branch
  * with ONE squashed commit and force-pushes it, so deleted files really free space and history
  * never grows. Only the `data` branch is ever force-pushed — never main.
  * Locally (DATA_PUSH unset) DATA_DIR is just a directory.
@@ -60,8 +62,13 @@ export class DataStore {
   }
 }
 
-const git = (cwd: string, ...args: string[]) =>
-  execFileSync("git", args, { cwd, stdio: ["ignore", "pipe", "pipe"] }).toString().trim();
+const git = (cwd: string, ...args: string[]) => gitEnv(cwd, {}, ...args);
+
+function gitEnv(cwd: string, extraEnv: Record<string, string>, ...args: string[]) {
+  return execFileSync("git", args, { cwd, stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, ...extraEnv } })
+    .toString()
+    .trim();
+}
 
 /**
  * CI only: attach the `data` branch as a worktree at DATA_DIR (or create an empty orphan).
@@ -104,9 +111,22 @@ export function publishDataBranch(message: string) {
   git(dir, "checkout", "--orphan", `data-${Date.now()}`);
   git(dir, "add", "-A");
   git(dir, "-c", "user.name=gitrepos-bot", "-c", "user.email=actions@users.noreply.github.com", "commit", "--quiet", "-m", message);
+  // Auth header via GIT_CONFIG_* env vars (never on the command line, so it can't leak into error
+  // messages); the encoded value is also masked in Actions logs.
+  const token = process.env.DATA_PUSH_TOKEN;
+  const authEnv: Record<string, string> = {};
+  if (token) {
+    const basic = Buffer.from(`x-access-token:${token}`).toString("base64");
+    if (process.env.GITHUB_ACTIONS) console.log(`::add-mask::${basic}`);
+    Object.assign(authEnv, {
+      GIT_CONFIG_COUNT: "1",
+      GIT_CONFIG_KEY_0: "http.https://github.com/.extraheader",
+      GIT_CONFIG_VALUE_0: `AUTHORIZATION: basic ${basic}`,
+    });
+  }
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      git(dir, "push", "--force", "origin", `HEAD:refs/heads/${config.dataBranch}`);
+      gitEnv(dir, authEnv, "push", "--force", "origin", `HEAD:refs/heads/${config.dataBranch}`);
       console.log(`[data] published ${config.dataBranch}: ${message}`);
       return;
     } catch (e) {

@@ -21,6 +21,8 @@ permissions:
 env:
   # Prefer a PAT (5,000 GraphQL points/h); fall back to the built-in token (1,000 points/h per repo).
   GITHUB_TOKEN: ${{ secrets.GH_PAT || github.token }}
+  # The data-branch push always uses the built-in token (a read-only PAT can't push).
+  DATA_PUSH_TOKEN: ${{ github.token }}
   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
@@ -35,8 +37,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false # the data-branch push authenticates explicitly
       - uses: ./.github/actions/setup
+
+      - name: Pre-flight checks (secrets, D1, migrations, deploy access)
+        id: preflight
+        run: npx tsx scripts/preflight.ts --deploy
 
       - name: Ingest GH Archive
         id: ingest
@@ -48,13 +56,13 @@ jobs:
         run: npm run job:rank
 
       - name: Publish data branch
-        if: always() && steps.ingest.outcome != 'skipped'
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
         run: npx tsx jobs/data.ts publish "hourly $(date -u +%Y-%m-%dT%H:%MZ)"
 
       # ---- Build + deploy (skipped until Cloudflare secrets exist) ----
       - name: Restore star-history cache
         if: env.CLOUDFLARE_API_TOKEN != '' && (github.event_name == 'schedule' || inputs.deploy)
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .data/history-*.json
           key: history-${{ github.run_id }}
@@ -67,8 +75,6 @@ jobs:
       - name: Build site (OpenNext)
         if: env.CLOUDFLARE_API_TOKEN != '' && (github.event_name == 'schedule' || inputs.deploy)
         run: |
-          # Inject the real D1 id (kept out of git) into wrangler.jsonc for this build only.
-          sed -i "s/00000000-0000-0000-0000-000000000000/${D1_DATABASE_ID}/" wrangler.jsonc
           npm run cf:build
           npm run cf:check
 

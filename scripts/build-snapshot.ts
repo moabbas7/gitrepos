@@ -11,6 +11,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync
 import { join } from "node:path";
 import {
   countPublishedRepos,
+  getRepoHistory,
   listDigests,
   listPublishedRepos,
   listRankings,
@@ -55,16 +56,7 @@ async function run() {
     }
     const since = new Date(Date.now() - HISTORY_DAYS * 86_400_000).toISOString().slice(0, 10);
     const missing = repos.map((r) => r.id).filter((id) => !history[id]);
-    for (let i = 0; i < missing.length; i += 100) {
-      const chunk = missing.slice(i, i + 100);
-      const rows = await db.all<{ repo_id: number; date: string; gained: number; stars: number | null }>(
-        `SELECT repo_id, date, gained, stars FROM repo_daily
-         WHERE repo_id IN (${chunk.map(() => "?").join(",")}) AND date >= ? ORDER BY repo_id, date`,
-        [...chunk, since],
-      );
-      for (const id of chunk) history[id] = [];
-      for (const r of rows) history[r.repo_id].push([r.date, r.gained, r.stars]);
-    }
+    for (const [id, rows] of await getRepoHistory(db, missing, since)) history[id] = rows;
     for (const f of readdirSync(OUT_DIR)) if (/^history-.*\.json$/.test(f) && f !== `history-${latest}.json`) rmSync(join(OUT_DIR, f));
     writeFileSync(cachePath, JSON.stringify(history));
 

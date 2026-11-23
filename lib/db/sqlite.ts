@@ -1,16 +1,20 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { assertD1Limits } from "./limits";
 import { addMeta, type Db, type RunMeta, type SqlValue, type Statement, ZERO_META } from "./types";
 
 /**
  * node:sqlite adapter (Node >= 22.13) used by tests and local tooling. D1 is SQLite, so the same
  * migrations and queries run unchanged. rowsWritten is approximated by `changes` (D1 also counts
  * index writes; tests that check budgets use the REST/D1 meta instead).
+ * D1's statement limits (100 bound params, 100 KB SQL) are enforced here too, so tests fail on any
+ * query production D1 would reject — SQLite itself allows ~32k params.
  */
 export function sqliteDb(path = ":memory:"): Db & { raw: DatabaseSync } {
   const raw = new DatabaseSync(path);
   const exec = (sql: string, params: SqlValue[] = []): RunMeta => {
+    assertD1Limits(sql, params);
     const r = raw.prepare(sql).run(...params);
     const changes = Number(r.changes);
     return { rowsRead: 0, rowsWritten: changes, changes };
@@ -18,9 +22,11 @@ export function sqliteDb(path = ":memory:"): Db & { raw: DatabaseSync } {
   return {
     raw,
     async all<T>(sql: string, params: SqlValue[] = []) {
+      assertD1Limits(sql, params);
       return raw.prepare(sql).all(...params) as T[];
     },
     async first<T>(sql: string, params: SqlValue[] = []) {
+      assertD1Limits(sql, params);
       return (raw.prepare(sql).get(...params) as T | undefined) ?? null;
     },
     async run(sql: string, params?: SqlValue[]) {

@@ -1,4 +1,7 @@
+import { D1_MAX_PARAMS } from "@/lib/db/limits";
 import type { SqlValue, Statement } from "@/lib/db/types";
+
+export { D1_MAX_PARAMS, D1_MAX_SQL_BYTES } from "@/lib/db/limits";
 
 /** SQL literal for generated .sql files (seed). Prefer bound params everywhere else. */
 export function lit(v: SqlValue | boolean | undefined): string {
@@ -7,10 +10,6 @@ export function lit(v: SqlValue | boolean | undefined): string {
   if (typeof v === "number") return Number.isFinite(v) ? String(v) : "NULL";
   return `'${v.replace(/'/g, "''")}'`;
 }
-
-/** D1 limits: 100 bound parameters per statement, 100 KB per statement. */
-export const D1_MAX_PARAMS = 100;
-export const D1_MAX_SQL_BYTES = 100_000;
 
 /**
  * Builds multi-row INSERT statements that respect D1's 100-parameter limit.

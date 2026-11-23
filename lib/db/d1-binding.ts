@@ -1,3 +1,4 @@
+import { assertD1Limits } from "./limits";
 import { addMeta, type Db, type RunMeta, type SqlValue, type Statement, ZERO_META } from "./types";
 
 function metaOf(m: D1Meta | undefined): RunMeta {
@@ -6,7 +7,10 @@ function metaOf(m: D1Meta | undefined): RunMeta {
 
 /** Adapter over a Cloudflare D1 binding (env.DB). */
 export function d1BindingDb(d1: D1Database): Db {
-  const prep = (sql: string, params: SqlValue[] = []) => d1.prepare(sql).bind(...params);
+  const prep = (sql: string, params: SqlValue[] = []) => {
+    assertD1Limits(sql, params);
+    return d1.prepare(sql).bind(...params);
+  };
   return {
     async all<T>(sql: string, params?: SqlValue[]) {
       const r = await prep(sql, params).all<T>();

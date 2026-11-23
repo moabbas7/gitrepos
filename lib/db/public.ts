@@ -4,6 +4,7 @@
  * (Replaces Supabase "public read" RLS: everything else lives in lib/db/server-only.ts.)
  */
 import type { ListType, RankPeriod, RepoCardData } from "@/lib/types";
+import { inClauseChunks, placeholders } from "./limits";
 import type { Db } from "./types";
 
 export interface RepoRow {
@@ -139,6 +140,25 @@ export async function getRepoDaily(
     repoId,
     sinceDate,
   ]);
+}
+
+/** Daily history for many repos, chunked to D1's 100-parameter limit (1 slot reserved for `since`). */
+export async function getRepoHistory(
+  db: Db,
+  repoIds: readonly number[],
+  sinceDate: string,
+): Promise<Map<number, [string, number, number | null][]>> {
+  const out = new Map<number, [string, number, number | null][]>();
+  for (const id of repoIds) out.set(id, []);
+  for (const chunk of inClauseChunks(repoIds, 1)) {
+    const rows = await db.all<{ repo_id: number; date: string; gained: number; stars: number | null }>(
+      `SELECT repo_id, date, gained, stars FROM repo_daily
+       WHERE repo_id IN (${placeholders(chunk)}) AND date >= ? ORDER BY repo_id, date`,
+      [...chunk, sinceDate],
+    );
+    for (const r of rows) out.get(r.repo_id)!.push([r.date, r.gained, r.stars]);
+  }
+  return out;
 }
 
 export async function listTopics(db: Db, limit = 200): Promise<Topic[]> {

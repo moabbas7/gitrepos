@@ -3,6 +3,7 @@ import { parseJsonArray } from "@/lib/db/public";
 import type { Db, SqlValue } from "@/lib/db/types";
 import type { RepoCardData } from "@/lib/types";
 import type { WriteBudget } from "./budget";
+import { inClauseChunks, placeholders } from "@/lib/db/limits";
 import { chunkedInsert } from "./sql";
 
 export const MAX_DELETES_PER_RUN = 10_000;
@@ -36,10 +37,9 @@ export async function pruneStaleRepos(db: Db, cutoffIso: string, budget?: WriteB
     [cutoffIso, max],
   );
   const ids = stale.map((r) => r.id).filter((id) => !ranked.has(id));
-  for (let i = 0; i < ids.length; i += 100) {
-    const chunk = ids.slice(i, i + 100);
+  for (const chunk of inClauseChunks(ids)) {
     budget?.check(chunk.length * 2);
-    await db.run(`DELETE FROM repos WHERE id IN (${chunk.map(() => "?").join(",")})`, chunk);
+    await db.run(`DELETE FROM repos WHERE id IN (${placeholders(chunk)})`, chunk);
   }
   return ids.length;
 }
@@ -78,9 +78,8 @@ export async function recomputeTopics(db: Db, now: Date): Promise<{ written: num
   );
   const keep = new Set(top.map(([t]) => t));
   const drop = [...current.keys()].filter((t) => !keep.has(t));
-  for (let i = 0; i < drop.length; i += 100) {
-    const chunk = drop.slice(i, i + 100);
-    await db.run(`DELETE FROM topics WHERE topic IN (${chunk.map(() => "?").join(",")})`, chunk);
+  for (const chunk of inClauseChunks(drop)) {
+    await db.run(`DELETE FROM topics WHERE topic IN (${placeholders(chunk)})`, chunk);
   }
   return { written: changed.length, dropped: drop.length };
 }

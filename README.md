@@ -59,6 +59,14 @@ Everything runs on free tiers that don't need a credit card: **Cloudflare Worker
 | `summaries` | daily, after prune | Gemini summaries for the top 40 repos and template summaries for the rest. Never fails | ≤1k |
 
 Every job writes a row to `job_runs` with start, end, status, rows read and written, DB size and any error.
+- **Pre-flight.** Each workflow starts with `scripts/preflight.ts`, which stops the run with one clear message (in the log and the run summary) if:
+  - only some Cloudflare secrets are set, or a value is malformed or has stray spaces or quotes
+  - `wrangler.jsonc` and `D1_DATABASE_ID` point at different databases
+  - the API token is inactive or lacks D1 or Workers access
+  - a migration isn't applied to the remote D1
+
+  A bad GitHub token is only a warning. Run it locally with `npx tsx scripts/preflight.ts --deploy`.
+- **D1 limits in tests.** Every database adapter enforces D1's limits (100 bound parameters, 100 KB of SQL per statement), including the `node:sqlite` adapter the tests use. A query D1 would reject now fails in `npm test` too. Use `inClauseChunks()` from `lib/db/limits.ts` for `IN (…)` lists.
 - **Budget guard.** Before writing, a job adds up today's `rows_written`. Above `D1_DAILY_WRITE_BUDGET` (80k of the 100k free) it stops non-critical writes and logs `throttled`.
 - **Failed runs.** A failed run never deletes existing data.
 
@@ -170,6 +178,8 @@ In the repo, go to **Settings → Secrets and variables → Actions**.
 | `GEMINI_MODEL` | `gemini-3.5-flash-lite` |
 
 - **Permissions.** The workflows declare their own `permissions` (`contents: write` is used only to push the `data` branch).
+  - Checkout doesn't keep credentials (`persist-credentials: false`).
+  - The data-branch push authenticates explicitly with the workflow's built-in token.
 - **Kick off a run.** Go to **Actions → hourly → Run workflow**.
 - **Before the Cloudflare secrets exist,** the workflows still run. They build star history on the `data` branch against a throwaway local D1, and skip deploying.
 - **Expect thin lists at first.** Today needs about 24h of star history, Week about 7 days and Month about 30 days. Until then, gains are counted only from when tracking started, so lists fill in over the first few days.

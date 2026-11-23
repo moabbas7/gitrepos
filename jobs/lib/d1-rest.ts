@@ -6,6 +6,7 @@
  * - Reports rows_read / rows_written from D1's own meta (this is what the free-tier limit counts).
  * - Optional WriteBudget: every write is checked before sending and recorded afterwards.
  */
+import { assertD1Limits } from "@/lib/db/limits";
 import { addMeta, type Db, type RunMeta, type SqlValue, type Statement, ZERO_META } from "@/lib/db/types";
 import type { WriteBudget } from "./budget";
 import { statementBytes } from "./sql";
@@ -73,6 +74,7 @@ export function d1RestDb(opts: RestOptions): RestDb {
   let totals = ZERO_META;
 
   async function send(batch: Statement[]): Promise<D1ResultItem[]> {
+    for (const s of batch) assertD1Limits(s.sql, s.params ?? []); // fail fast, before any network call
     if (opts.budget) opts.budget.check(batch.reduce((n, s) => n + estimateWrites(s), 0));
     const body = JSON.stringify({ batch: batch.map((s) => ({ sql: s.sql, params: s.params ?? [] })) });
     for (let attempt = 0; ; attempt++) {

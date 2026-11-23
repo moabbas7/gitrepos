@@ -14,6 +14,7 @@ permissions:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GH_PAT || github.token }}
+  DATA_PUSH_TOKEN: ${{ github.token }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.5-flash-lite' }}
   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -29,16 +30,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
+      - name: Pre-flight checks (secrets, D1, migrations)
+        id: preflight
+        run: npx tsx scripts/preflight.ts
       - name: Snapshot
         run: npm run job:snapshot
+      # The steps below still run if an earlier job step fails, but never after a failed pre-flight.
       - name: Rollup and prune
-        if: always()
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
         run: npm run job:prune
       - name: Summaries (Gemini + template fallback; never fails the run)
-        if: always()
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
         run: npm run job:summaries
       - name: Publish data branch
-        if: always()
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
         run: npx tsx jobs/data.ts publish "daily $(date -u +%Y-%m-%d)"
