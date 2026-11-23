@@ -1,0 +1,314 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Dark is the default theme; light is opt-in via <html data-theme="light">. See DESIGN.md. */
+@custom-variant dark (&:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *));
+@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
+
+/* ------------------------------------------------------------------ */
+/* GitRepos tokens (--gr-*) — single source of colour truth            */
+/* ------------------------------------------------------------------ */
+:root {
+  color-scheme: dark;
+
+  /* Logo samples (brand/logo.png) */
+  --gr-logo-blue: #049dff;
+  --gr-logo-violet: #612bfb;
+  --gr-logo-purple: #9340ff;
+  --gr-logo-magenta: #fd26fe;
+
+  --gr-grad-brand: linear-gradient(90deg, #049dff 0%, #612bfb 50%, #fd26fe 100%);
+  --gr-grad-strong: linear-gradient(90deg, #0677d6 0%, #5a22f0 55%, #c21bd0 100%);
+  --gr-grad-ring: conic-gradient(from 200deg, #049dff, #612bfb, #9340ff, #fd26fe, #612bfb, #049dff);
+
+  /* Surfaces */
+  --gr-canvas: #080b16;
+  --gr-canvas-sunken: #05070f;
+  --gr-surface: #0e1224;
+  --gr-surface-raised: #141a33;
+  --gr-surface-hover: #1a2142;
+  --gr-hairline: #232a4a;
+  --gr-frame: #343d66;
+  --gr-frame-width: 1.5px;
+
+  /* Text */
+  --gr-heading: #ffa733;
+  --gr-subline: #ffd84a;
+  --gr-ink: #f4f6ff;
+  --gr-body: #c9cee6;
+  --gr-mute: #8c93b8;
+  --gr-ash: #5d648a;
+
+  /* Semantic */
+  --gr-peach: #ffe2c6;
+  --gr-peach-ink: #2a1606;
+  --gr-growth-bg: #0e3b2b;
+  --gr-growth-fg: #5bf0a6;
+  --gr-growth-border: #1d6b4b;
+  --gr-hot: #ff5a36;
+  --gr-danger: #ff6b6b;
+  --gr-focus: #7cc8ff;
+
+  /* Rotating accents (tags / badges / sponsor cards only) */
+  --gr-accent-cyan: #38bdf8;
+  --gr-accent-violet: #a78bfa;
+  --gr-accent-magenta: #f472d0;
+  --gr-accent-amber: #ffb547;
+  --gr-accent-lime: #a3e635;
+  --gr-accent-peach: #ffc9a3;
+
+  /* Elevation (hard offset, no blur) */
+  --gr-shadow-rest: 3px 3px 0 0 #1e1650;
+  --gr-shadow-hover: 5px 5px 0 0 #3a24a8;
+  --gr-shadow-press: 1px 1px 0 0 #1e1650;
+
+  /* shadcn semantic mapping */
+  --background: var(--gr-canvas);
+  --foreground: var(--gr-ink);
+  --card: var(--gr-surface);
+  --card-foreground: var(--gr-ink);
+  --popover: var(--gr-surface-raised);
+  --popover-foreground: var(--gr-ink);
+  --primary: #5a22f0;
+  --primary-foreground: #ffffff;
+  --secondary: var(--gr-surface-raised);
+  --secondary-foreground: var(--gr-ink);
+  --muted: var(--gr-surface-raised);
+  --muted-foreground: var(--gr-mute);
+  --accent: var(--gr-surface-hover);
+  --accent-foreground: var(--gr-ink);
+  --destructive: var(--gr-danger);
+  --border: var(--gr-hairline);
+  --input: var(--gr-frame);
+  --ring: var(--gr-focus);
+  --chart-1: var(--gr-logo-blue);
+  --chart-2: var(--gr-logo-violet);
+  --chart-3: var(--gr-logo-magenta);
+  --chart-4: var(--gr-heading);
+  --chart-5: var(--gr-growth-fg);
+  --radius: 0.75rem;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --gr-canvas: #f5f6fb;
+  --gr-canvas-sunken: #eceef7;
+  --gr-surface: #ffffff;
+  --gr-surface-raised: #eef0f8;
+  --gr-surface-hover: #e6e9f5;
+  --gr-hairline: #d6d9ea;
+  --gr-frame: #11142a;
+  --gr-frame-width: 2px;
+
+  --gr-heading: #b45309;
+  --gr-subline: #8a5a00;
+  --gr-ink: #0b0e1c;
+  --gr-body: #2c3150;
+  --gr-mute: #5a6080;
+  --gr-ash: #9aa0bd;
+
+  --gr-growth-bg: #dcfce9;
+  --gr-growth-fg: #0b6b3a;
+  --gr-growth-border: #86e0ae;
+  --gr-hot: #c2410c;
+  --gr-danger: #b91c1c;
+  --gr-focus: #0677d6;
+
+  --gr-accent-cyan: #0369a1;
+  --gr-accent-violet: #6d28d9;
+  --gr-accent-magenta: #a21caf;
+  --gr-accent-amber: #b45309;
+  --gr-accent-lime: #3f6212;
+  --gr-accent-peach: #9a3412;
+
+  --gr-shadow-rest: 4px 4px 0 0 #11142a;
+  --gr-shadow-hover: 6px 6px 0 0 #11142a;
+  --gr-shadow-press: 1px 1px 0 0 #11142a;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-sora);
+  --font-mono: var(--font-jetbrains);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* GitRepos utilities: bg-canvas, text-heading, border-frame, ... */
+  --color-canvas: var(--gr-canvas);
+  --color-canvas-sunken: var(--gr-canvas-sunken);
+  --color-surface: var(--gr-surface);
+  --color-surface-raised: var(--gr-surface-raised);
+  --color-surface-hover: var(--gr-surface-hover);
+  --color-hairline: var(--gr-hairline);
+  --color-frame: var(--gr-frame);
+  --color-heading: var(--gr-heading);
+  --color-subline: var(--gr-subline);
+  --color-ink: var(--gr-ink);
+  --color-body: var(--gr-body);
+  --color-mute: var(--gr-mute);
+  --color-ash: var(--gr-ash);
+  --color-peach: var(--gr-peach);
+  --color-peach-ink: var(--gr-peach-ink);
+  --color-growth-bg: var(--gr-growth-bg);
+  --color-growth-fg: var(--gr-growth-fg);
+  --color-growth-border: var(--gr-growth-border);
+  --color-hot: var(--gr-hot);
+  --color-focus: var(--gr-focus);
+  --color-logo-blue: var(--gr-logo-blue);
+  --color-logo-violet: var(--gr-logo-violet);
+  --color-logo-magenta: var(--gr-logo-magenta);
+
+  --shadow-hard: var(--gr-shadow-rest);
+  --shadow-hard-hover: var(--gr-shadow-hover);
+  --shadow-hard-press: var(--gr-shadow-press);
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    background: var(--gr-canvas);
+  }
+  body {
+    background: var(--gr-canvas);
+    color: var(--gr-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+    color: var(--gr-heading);
+    text-wrap: balance;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--gr-focus);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Level-2 framed card (DESIGN.md §6) */
+  .gr-frame {
+    background: var(--gr-surface);
+    border: var(--gr-frame-width) solid var(--gr-frame);
+    box-shadow: var(--gr-shadow-rest);
+  }
+  /* CSS-only hover lift (no JS animation) */
+  .gr-lift {
+    transition:
+      transform 160ms ease-out,
+      box-shadow 160ms ease-out,
+      background-color 160ms ease-out;
+  }
+  .gr-lift:hover,
+  .gr-lift:focus-within {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--gr-shadow-hover);
+  }
+  .gr-lift:active {
+    transform: translate(0, 0);
+    box-shadow: var(--gr-shadow-press);
+  }
+  /* 1.5px brand-gradient outline (used on the #1 card) */
+  .gr-ring-brand {
+    border-color: transparent;
+    background:
+      linear-gradient(var(--gr-surface), var(--gr-surface)) padding-box,
+      var(--gr-grad-brand) border-box;
+  }
+  .gr-grad-text {
+    background: var(--gr-grad-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .gr-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gr-subline);
+  }
+  .gr-subline {
+    color: var(--gr-subline);
+    font-weight: 500;
+  }
+  .gr-num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .gr-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--gr-surface-raised) 0%,
+      var(--gr-surface-hover) 50%,
+      var(--gr-surface-raised) 100%
+    );
+    background-size: 200% 100%;
+    animation: gr-shimmer 1.4s linear infinite;
+  }
+}
+
+@keyframes gr-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-lift,
+  .gr-lift:hover,
+  .gr-lift:focus-within,
+  .gr-lift:active {
+    transition: none;
+    transform: none;
+  }
+  .gr-shimmer {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}

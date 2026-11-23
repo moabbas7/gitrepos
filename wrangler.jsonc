@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gitrepos",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-20",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    // Prerendered pages + the read-only OpenNext incremental cache live here.
+    // Static asset requests are free and unlimited on Workers Free.
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // Self-reference binding required by OpenNext; must match "name".
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "gitrepos"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gitrepos",
+      // Replace with the id printed by `npx wrangler d1 create gitrepos` (see README).
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 }
+  // No R2 / KV / Durable Objects: everything stays on the no-card Workers Free plan.
+}
