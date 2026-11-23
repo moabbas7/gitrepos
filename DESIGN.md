@@ -1,302 +1,237 @@
 ---
-version: 1
+version: 2
 name: GitRepos
-summary: Dark-first, orbit-themed developer-discovery system for gitrepos.si. It uses a deep-navy canvas, colours from the logo ring (blue → violet → magenta), amber headings with yellow sub-lines, mono type for anything code-shaped, and a softened neo-brutalist frame (hard offset shadows, visible borders) that reads like the brand's Instagram post cards.
+summary: Dark-only, three-colour system for gitrepos.si. A near-black canvas, white text whose greys are only white at lower opacity, and one accent, the logo's blue → violet → magenta gradient, used as light (glows, rings, key numbers) rather than paint. It uses hairline borders, light glass, soft glows instead of shadows, tight Geist display type and mono data. Motion is slow, subtle and transform/opacity only.
 
 colors:
-  # Logo samples (brand/logo.png): ring at 180° / 90° / 0°, ink, mascot
-  logo-blue: "#049DFF"
-  logo-violet: "#612BFB"
-  logo-purple: "#9340FF"
-  logo-magenta: "#FD26FE"
-  logo-ink: "#000000"
-  logo-white: "#FEFEFE"
+  # The entire palette. Nothing else is allowed.
+  black: "#07070B"      # background
+  white: "#FAFAFA"      # text; every grey is white at an opacity
+  gradient-1: "#049DFF" # logo ring, 9 o'clock
+  gradient-2: "#612BFB" # logo ring, 6 o'clock
+  gradient-3: "#FD26FE" # logo ring, 3 o'clock
 
-  # Dark theme (default)
-  canvas: "#080B16"
-  canvas-sunken: "#05070F"
-  surface: "#0E1224"
-  surface-raised: "#141A33"
-  surface-hover: "#1A2142"
-  hairline: "#232A4A"
-  hairline-strong: "#343D66"
-  shadow-hard: "#1E1650"
-  shadow-glow: "#3A24A8"
-  heading: "#FFA733"        # amber/orange — headings
-  subline: "#FFD84A"        # yellow — sub-lines, eyebrows
-  ink: "#F4F6FF"            # white body text
-  body: "#C9CEE6"
-  mute: "#8C93B8"
-  ash: "#5D648A"
-  peach: "#FFE2C6"          # cream/peach light accent
-  peach-ink: "#2A1606"
-  growth-bg: "#0E3B2B"
-  growth-fg: "#5BF0A6"
-  growth-border: "#1D6B4B"
-  danger: "#FF6B6B"
-  focus: "#7CC8FF"
-
-  # Gradient-strong (logo hues darkened for AA white text on buttons)
-  grad-strong-1: "#0677D6"
-  grad-strong-2: "#5A22F0"
-  grad-strong-3: "#C21BD0"
-
-  # Rotating accents (tags, badges, sponsor cards only)
-  accent-cyan: "#38BDF8"
-  accent-violet: "#A78BFA"
-  accent-magenta: "#F472D0"
-  accent-amber: "#FFB547"
-  accent-lime: "#A3E635"
-  accent-peach: "#FFC9A3"
-  hot: "#FF5A36"
-
-  # Light theme (toggle)
-  light-canvas: "#F5F6FB"
-  light-surface: "#FFFFFF"
-  light-surface-raised: "#EEF0F8"
-  light-hairline: "#D6D9EA"
-  light-frame: "#11142A"
-  light-heading: "#B45309"
-  light-subline: "#8A5A00"
-  light-ink: "#0B0E1C"
-  light-body: "#2C3150"
-  light-mute: "#5A6080"
-  light-growth-bg: "#DCFCE9"
-  light-growth-fg: "#0B6B3A"
-  light-growth-border: "#86E0AE"
+opacity-ladder:          # the only "greys": white at these alphas
+  text-primary: 1.00
+  text-secondary: 0.64
+  text-tertiary: 0.50
+  text-disabled: 0.28
+  border-strong: 0.16
+  border: 0.10
+  hairline: 0.08
+  surface-raised: 0.06
+  surface: 0.03
 
 gradients:
   brand: "linear-gradient(90deg, #049DFF 0%, #612BFB 50%, #FD26FE 100%)"
-  brand-strong: "linear-gradient(90deg, #0677D6 0%, #5A22F0 55%, #C21BD0 100%)"
-  ring: "conic-gradient(from 200deg, #049DFF, #612BFB, #9340FF, #FD26FE, #612BFB, #049DFF)"
+  brand-conic: "conic-gradient(from 0deg, #049DFF, #612BFB, #FD26FE, #612BFB, #049DFF)"
+  # For text on a gradient fill: the same gradient under a 30% veil of the background colour.
+  # White text then passes AA at every stop (≥ 5.0:1). Still three colours: black, white, gradient.
+  brand-veiled: "linear-gradient(rgba(7,7,11,.3), rgba(7,7,11,.3)), linear-gradient(90deg, #049DFF, #612BFB, #FD26FE)"
 
 typography:
-  display: { fontFamily: Sora, weight: 700, size: 56px, lineHeight: 1.05, letterSpacing: -0.02em }
-  h1: { fontFamily: Sora, weight: 700, size: 40px, lineHeight: 1.1, letterSpacing: -0.015em }
-  h2: { fontFamily: Sora, weight: 650, size: 28px, lineHeight: 1.2, letterSpacing: -0.01em }
-  h3: { fontFamily: Sora, weight: 600, size: 20px, lineHeight: 1.3 }
-  subline: { fontFamily: Inter, weight: 500, size: 18px, lineHeight: 1.5 }
-  body: { fontFamily: Inter, weight: 400, size: 16px, lineHeight: 1.6 }
-  body-sm: { fontFamily: Inter, weight: 400, size: 14px, lineHeight: 1.55 }
-  caption: { fontFamily: Inter, weight: 500, size: 12px, lineHeight: 1.4 }
-  eyebrow: { fontFamily: JetBrains Mono, weight: 600, size: 12px, letterSpacing: 0.12em, transform: uppercase }
-  mono-name: { fontFamily: JetBrains Mono, weight: 600, size: 16px, lineHeight: 1.3 }
-  mono-num: { fontFamily: JetBrains Mono, weight: 600, size: 13px, fontFeature: '"tnum"' }
+  display: { fontFamily: Geist, weight: 600, size: 64px, lineHeight: 1.02, letterSpacing: -0.045em }
+  h1: { fontFamily: Geist, weight: 600, size: 44px, lineHeight: 1.08, letterSpacing: -0.035em }
+  h2: { fontFamily: Geist, weight: 600, size: 28px, lineHeight: 1.15, letterSpacing: -0.025em }
+  h3: { fontFamily: Geist, weight: 600, size: 18px, lineHeight: 1.3, letterSpacing: -0.015em }
+  lead: { fontFamily: Inter, weight: 400, size: 18px, lineHeight: 1.6, color: "white/64" }
+  body: { fontFamily: Inter, weight: 400, size: 15px, lineHeight: 1.6 }
+  small: { fontFamily: Inter, weight: 400, size: 13px, lineHeight: 1.5 }
+  eyebrow: { fontFamily: JetBrains Mono, weight: 500, size: 12px, letterSpacing: 0.08em, transform: uppercase, color: "white/50" }
+  mono-name: { fontFamily: JetBrains Mono, weight: 500, size: 15px }
+  mono-num: { fontFamily: JetBrains Mono, weight: 500, size: 13px, fontFeature: '"tnum"' }
 
-rounded: { xs: 6px, sm: 8px, md: 12px, lg: 16px, full: 9999px }
-spacing: { 1: 4px, 2: 8px, 3: 12px, 4: 16px, 5: 20px, 6: 24px, 8: 32px, 12: 48px, 16: 64px, section: 80px }
-border: { hair: 1px, frame: 1.5px, frame-light: 2px }
-shadow:
-  dark-rest: "3px 3px 0 0 #1E1650"
-  dark-hover: "5px 5px 0 0 #3A24A8"
-  light-rest: "4px 4px 0 0 #11142A"
-  light-hover: "6px 6px 0 0 #11142A"
+rounded: { sm: 8px, md: 12px, lg: 16px, full: 9999px }
+spacing: { 1: 4px, 2: 8px, 3: 12px, 4: 16px, 6: 24px, 8: 32px, 12: 48px, 16: 64px, 24: 96px, section: 128px }
+blur: { glass: 16px, header: 20px }
+motion:
+  ease-out: "cubic-bezier(0.22, 1, 0.36, 1)"
+  fast: 160ms
+  base: 320ms
+  slow: 700ms
+  ambient: 24s
 ---
 
-# GitRepos Design System
+# GitRepos Design System v2
 
 ## 1. Visual Theme & Atmosphere
 
-GitRepos is the website for **gitrepos.si**, an Instagram account that posts curated GitHub finds. The site should feel like scrolling through those post cards: a **deep-navy night sky**, a glowing **blue → violet → magenta orbit ring** from the logo, an **amber headline** with a **yellow sub-line** under it, and white body copy. Repository names, commands and numbers are set in **mono**, because that's what developers expect them to look like.
+GitRepos is the website for the **gitrepos.si** Instagram account. The site is a dark instrument panel for what developers are starring right now. It's calm, precise and quiet, so the data and one ribbon of colour can speak. The feel is closer to Linear, Vercel and Raycast than to a poster: hairlines instead of frames, glows instead of shadows, and type that does the work.
 
-The frame is **neo-brutalist, softened for dark**. Cards have visible 1.5px borders and **hard offset shadows with no blur**. On dark, those shadows are a **muted violet** (`#1E1650`, the logo violet sunk into the navy) at rest and turn a brighter violet (`#3A24A8`) on hover. That keeps the brutalist "stacked paper" depth without harsh white outlines. Light mode is an optional toggle, cool off-white with crisp ink frames. It is never cream.
+There are **exactly three colours**:
+- **Black `#07070B`** is the canvas, everywhere.
+- **White `#FAFAFA`** is the text. Every grey in the system is this white at a lower opacity. There is no grey hex, and no tinted grey.
+- **The logo gradient `#049DFF → #612BFB → #FD26FE`** is the single accent. It behaves like **light**: a glow behind the hero, a ring around the focused or #1 element, the underline of the active tab, the fill of the primary button, and the colour of a key number. It never fills large areas and never decorates for its own sake.
+
+There is no light mode, no secondary accent, no semantic colours, and no coloured language dots. Status comes from words, icons and position.
 
 **Key characteristics**
-- Dark-first: `canvas #080B16` → `surface #0E1224` → `surface-raised #141A33`.
-- The logo gradient is a **signal, not wallpaper**. It's used only for primary buttons, the #1 badge, focus/selection highlights and the orbit-ring motif.
-- Amber `#FFA733` headings with yellow `#FFD84A` sub-lines carry the Instagram-card voice.
-- Repo cards stay **neutral**. Colour rotates only on topic tags, badges and sponsor cards.
-- Growth numbers always sit on a **green pill** (`#5BF0A6` on `#0E3B2B`, 8.6:1 contrast), never as bare coloured text.
-- Mono (JetBrains Mono) for `owner/repo`, CLI snippets, star counts, ranks and dates.
+- **Surfaces** are white at 3% / 6% over black, with **1px white/8–10% hairlines** and 12–16px radius.
+- **Glass:** the header and cards use `backdrop-filter: blur(16–20px)` over translucent white/3%.
+- **Depth** comes from *soft gradient glows* (large, low-opacity, blurred). There are no drop shadows and no hard offsets.
+- **Type:** tight **Geist** display (negative tracking) for headings, **Inter** for body, **JetBrains Mono** for repo names, numbers and commands.
+- **Motion:** slow and subtle. It animates **transform and opacity only**, honours `prefers-reduced-motion`, and causes no layout shift.
 
 ## 2. Colour Palette & Roles
 
-### Brand (sampled from `brand/logo.png`)
-| Token | Hex | Role |
+| Role | Value | Notes |
 |---|---|---|
-| `logo-blue` | `#049DFF` | Gradient start (ring at 9 o'clock) |
-| `logo-violet` | `#612BFB` | Gradient mid (ring at 6 o'clock) |
-| `logo-purple` | `#9340FF` | Secondary mid (ring at 12 o'clock) |
-| `logo-magenta` | `#FD26FE` | Gradient end (ring at 3 o'clock) |
-| `logo-ink` / `logo-white` | `#000000` / `#FEFEFE` | Logo disc and mascot |
+| Canvas | `#07070B` | Page and body background. `color-scheme: dark` |
+| Text, primary | `#FAFAFA` | Headings, repo names, numbers |
+| Text, secondary | white / 64% | Descriptions, lead paragraphs (7.9:1 on canvas) |
+| Text, tertiary | white / 50% | Metadata, eyebrows, axis labels (5.0:1). The lowest grey allowed for content |
+| Text, disabled | white / 28% | Disabled only; never for content |
+| Border, strong | white / 16% | Inputs, hovered hairlines |
+| Border | white / 10% | Topic tags, chips, buttons (secondary) |
+| Hairline | white / 8% | Cards, dividers, header bottom edge |
+| Surface, raised | white / 6% | Active tab pill, keycaps, hovered rows |
+| Surface | white / 3% | Cards (glass), inputs |
+| Accent | `brand` gradient | Primary buttons, active tab, #1 badge and ring, focus rings, key numbers, glows |
 
-- **`brand` gradient** (exact logo stops). Used for decorative strokes: the orbit ring, the 2px top rule on the hero, the #1 card's outline, and selected-tab underlines. It sits under no body text.
-- **`brand-strong` gradient** (`#0677D6 → #5A22F0 → #C21BD0`). Same hues, darkened so **white text passes AA** (4.55:1 or better at every stop). Used as the fill for primary buttons and the TRENDING #1 badge.
-
-### Surfaces (dark)
-| Token | Hex | Role |
-|---|---|---|
-| `canvas` | `#080B16` | Page background |
-| `canvas-sunken` | `#05070F` | Code blocks, inset wells, the ad-slot placeholder |
-| `surface` | `#0E1224` | Cards (repo, sponsor, stat tiles) |
-| `surface-raised` | `#141A33` | Inputs, popovers, active tab pill |
-| `surface-hover` | `#1A2142` | Row/card hover fill |
-| `hairline` | `#232A4A` | Dividers, quiet borders |
-| `hairline-strong` | `#343D66` | Card frame (1.5px) |
-
-### Text (dark)
-| Token | Hex | Use | On canvas |
-|---|---|---|---|
-| `heading` | `#FFA733` | H1–H3, section titles | 10.1:1 |
-| `subline` | `#FFD84A` | The line under a heading, eyebrows | 14.2:1 |
-| `ink` | `#F4F6FF` | Primary body, repo names | 18.2:1 |
-| `body` | `#C9CEE6` | Descriptions, paragraph copy | 12.6:1 |
-| `mute` | `#8C93B8` | Metadata, captions | 6.5:1 |
-| `ash` | `#5D648A` | Disabled only | 3.4:1 (not for content) |
-
-### Accents (rotate; tags, badges and sponsor cards only)
-`accent-cyan #38BDF8` · `accent-violet #A78BFA` · `accent-magenta #F472D0` · `accent-amber #FFB547` · `accent-lime #A3E635` · `accent-peach #FFC9A3`
-
-Each accent has three uses: text in the accent colour, a 12% alpha fill and a 35% alpha border. A topic gets its accent from a stable hash of its name, so `#rust` always looks the same.
-
-### Semantic
-- **Growth:** `growth-fg #5BF0A6` on `growth-bg #0E3B2B`, with border `#1D6B4B`.
-- **HOT:** `#FF5A36`.
-- **Danger:** `#FF6B6B`.
-- **Focus ring:** `#7CC8FF`, 2px with a 2px offset.
-- **Peach:** `#FFE2C6` with text `#2A1606`, a warm light accent for keycaps, the "Sponsored" label chip and occasional callouts.
-
-### Light theme (toggle)
-- **Surfaces:**
-  - canvas `#F5F6FB`
-  - surface `#FFFFFF`
-  - raised `#EEF0F8`
-- **Frames:** `#11142A` at 2px, hairline `#D6D9EA`.
-- **Text:**
-  - heading `#B45309` (4.65:1; headings are 20px+ bold)
-  - sub-line `#8A5A00` (5.5:1)
-  - ink `#0B0E1C`
-  - body `#2C3150`
-  - mute `#5A6080` (5.7:1)
-- **Growth:** `#0B6B3A` on `#DCFCE9`.
-- The brand gradients don't change.
+**Accent rules**
+- **Gradient text** is used only for display-size words (≥ 24px) and key numbers. The darkest stop, `#612BFB`, gives 3.1:1 on the canvas, which passes for large text only.
+- **White text on a gradient fill** must use `brand-veiled`, the gradient under a 30% veil of the canvas colour. That gives white ≥ 5.0:1 at every stop. It is still the same three colours.
+- **Focus** shows as a 2px ring. Gradient rings are on buttons, tabs and cards. Elsewhere the fallback is a solid 2px `#049DFF` outline (7.0:1).
+- **Glows** are radial or blurred gradient layers at 10–35% opacity, placed behind the hero, behind a hovered card (cursor spotlight), and around primary buttons.
 
 ## 3. Typography
 
-| Role | Family | Size / weight | Notes |
+| Role | Family | Size / weight / tracking | Colour |
 |---|---|---|---|
-| Display | **Sora** | 56 / 700, -0.02em | Hero only; 36px on mobile |
-| H1 | Sora | 40 / 700 | Colour `heading` |
-| H2 | Sora | 28 / 650 | Colour `heading` |
-| H3 | Sora | 20 / 600 | Card titles that aren't repo names |
-| Sub-line | **Inter** | 18 / 500 | Colour `subline`; always right under a heading |
-| Body | Inter | 16 / 400, lh 1.6 | `ink` / `body` |
-| Small | Inter | 14 / 400 | Descriptions in cards |
-| Caption | Inter | 12 / 500 | Metadata |
-| Eyebrow | **JetBrains Mono** | 12 / 600, uppercase, +0.12em | Colour `subline` |
-| Repo name | JetBrains Mono | 16 / 600 | `owner/` in `mute`, `repo` in `ink` |
-| Numbers | JetBrains Mono | 13 / 600, `tnum` | Stars, forks, ranks, growth |
+| Display | **Geist** | 64 / 600 / −0.045em (40px on mobile) | white; one or two words can be gradient |
+| H1 | Geist | 44 / 600 / −0.035em | white |
+| H2 | Geist | 28 / 600 / −0.025em | white |
+| H3 | Geist | 18 / 600 / −0.015em | white |
+| Lead | **Inter** | 18 / 400 / 1.6 | white/64 |
+| Body | Inter | 15 / 400 / 1.6 | white/64–100 |
+| Small | Inter | 13 / 400 | white/50–64 |
+| Eyebrow | **JetBrains Mono** | 12 / 500 / +0.08em / uppercase | white/50 |
+| Repo name | JetBrains Mono | 15 / 500 | `owner/` at white/50, `repo` in white |
+| Numbers | JetBrains Mono | 13 / 500 / tabular | white, or gradient for key stats |
 
-**Principles**
-- Sora gives the headings a rounded, geometric, orbital feel that matches the planet-ring mascot. Inter keeps long text readable.
-- Mono is used for **things you could paste into a terminal**: repo slugs, commands, counts. It is never used for paragraphs.
-- Load fonts with `next/font/google`: `subsets: ['latin']`, variable weights, `display: 'swap'`, and automatic size-adjusted fallbacks, so there's no layout shift.
+- **Fonts** load through `next/font/google`: latin subset, `display: swap`, automatic size-adjusted fallbacks, so there's no CLS.
+- **Headings** are sentence-case with negative tracking, never all-caps. Uppercase is reserved for mono eyebrows.
+- **Mono** is for anything you could paste into a terminal: slugs, commands, counts, dates, languages.
 
 ## 4. Component Stylings
 
-**Button**
-- **primary:** `brand-strong` fill, white text in Inter 14/600, 40px tall, `rounded.sm`, 1.5px `#02030A` frame, `dark-rest` shadow. Hover lifts −2px/−2px and uses `dark-hover`.
-- **secondary:** `surface-raised` fill, `ink` text, `hairline-strong` frame, same shadow logic.
-- **ghost:** transparent, `body` text; hover fill `surface-hover`.
-- All variants have sizes sm (32) / md (40) / lg (48).
-- Pressed: translate to 0 and the shadow collapses to 1px.
+All components live in `components/gr/*` and keep their public props.
 
-**Badge** (mono 11/700 uppercase, 22px tall, `rounded.full`)
-- **TRENDING:** `brand-strong` fill with white text; only on #1.
-- **NEW:** cyan soft (fill, border, text).
-- **HOT:** `#FF5A36` soft with a 🔥 glyph; only for the top 1% by velocity.
-- **SPONSORED:** peach fill with `peach-ink` text.
+**Button** (`variant: primary | secondary | ghost`, `size: sm | md | lg`)
+- **primary:**
+  - `brand-veiled` fill, white Inter 14/500, `rounded.full`, 1px white/16 inner edge
+  - **soft gradient glow** behind it, opacity 0.35 → 0.6 on hover
+- **secondary:** white/3 glass fill, 1px white/10 border, white text. On hover the border goes to white/16 and the fill to white/6.
+- **ghost:** transparent with white/64 text. On hover the text turns white and the fill goes to white/6.
+- **Interaction, all variants:**
+  - **Magnetic hover:** the button translates up to 6px towards the cursor, then springs back.
+  - **Press:** scales to 0.97.
+  - **Focus:** gradient ring.
+  - All of it is transform-only and disabled under reduced motion.
 
-**LanguageChip:** an 8px dot in the GitHub linguist colour plus the language name in Inter 13 `body`. There's no fill. The dot gets a 1px `hairline-strong` ring so dark language colours stay visible.
+**Badge** (`kind: trending | new | hot | sponsored`). Mono 11/500, uppercase, 22px tall, `rounded.full`.
+- **TRENDING (#1 only):** `brand-veiled` fill, white text, faint glow.
+- **NEW / HOT:** transparent, 1px white/10 border, white/64 text, with a small gradient glyph (✦ / ▲).
+- **SPONSORED:** 1px white/10 border, white/50 text.
+- **`AccentBadge`:** keeps its `accent` prop for compatibility but renders the neutral outlined style. Accents no longer exist.
 
-**TopicTag:** a rotating accent soft chip with a mono 12 label, prefixed with `#`, `rounded.full`, 24px tall. It links to `/topic/[topic]`.
+**LanguageChip:** mono 12, white/50, with no dot and no colour.
 
-**GrowthPill:** `growth-bg` fill, `growth-border` 1px, mono 12/700 `growth-fg`, content like "▲ +1.8k today", `rounded.full`, 24px tall.
+**TopicTag:** mono 12, white/64, 1px white/10 outline, `rounded.full`, 24px tall. On hover the border goes to white/16 and the text turns white.
 
-**Sparkline:** inline SVG, 96×28. A 1.75px stroke filled with the `brand` gradient, plus a soft area fill at 15% alpha. It has `aria-hidden` and the numbers sit next to it as text.
+**GrowthPill:** white mono 12/500 with tabular figures, e.g. `▲ +1.8k today`. The ▲ is a 9px SVG arrow filled with the brand gradient. It sits in a white/3 fill with a 1px white/8 hairline and `rounded.full`.
 
-**RepoCard** (neutral)
-- **Frame:** `surface` fill, 1.5px `hairline-strong` frame, `rounded.md`, padding 20, `dark-rest` shadow. Hover lifts −2px and uses `dark-hover` (CSS only).
-- **Row 1:** rank (mono `mute`, `#01`), a 32px rounded-sm avatar, the repo name, badges.
-- **Row 2:** a one-line description (`body`, clamp 1).
-- **Row 3:** up to 4 topic tags.
-- **Row 4:** language chip · ★ stars · ⑂ forks (mono `mute`) · growth pill · sparkline (right).
-- **Card #1:** gets a 1.5px **brand gradient outline** (border-image via background-clip) instead of `hairline-strong`.
-- **Links:** the whole card links to `/repo/owner/name`. There's also a "GitHub ↗" icon link.
+**Sparkline:** inline SVG with a 1.5px brand-gradient stroke and a 10% gradient area fill. It **draws in** (stroke-dashoffset) when its card enters the viewport.
 
-**SponsorCard shell:** same structure as RepoCard, but the frame colour comes from the rotating accent at 60%, with a SPONSORED badge in the top-right. Links use `rel="sponsored nofollow noopener"`. The empty state is a dashed `hairline-strong` frame with "+ Advertise here".
+**RepoCard** (`repo`, `period`)
+- **Frame:** white/3 glass, 1px white/8 hairline, `rounded.lg`, 20px padding.
+- **Spotlight:** a 360px radial gradient glow follows the cursor. It is a translated layer, so only transform moves.
+- **Hover:** the **border lights up** with the brand gradient through a masked ring that fades in.
+- **#1:** an **animated gradient border**, a conic gradient rotating slowly (12s) inside a masked 1px ring, plus the TRENDING badge.
+- **Contents, top to bottom:**
+  1. rank (mono white/50)
+  2. 32px avatar, mono name, badges
+  3. one-line description
+  4. ≤ 4 topic tags
+  5. language · ★ stars · ⑂ forks (mono white/50) · GrowthPill · sparkline
 
-**AdSlot:** a fixed-height reserved box (`feed` 250px, `sidebar` 600px, `inline` 280px). It renders **nothing** while ads are off: no border and no label, just reserved space with `aria-hidden`.
+**SponsorCard:** same glass frame and spotlight as RepoCard, with a SPONSORED badge. Links use `rel="sponsored nofollow noopener"`. The `accent` prop is accepted and ignored. The empty state is a dashed white/10 frame reading "Advertise here".
 
-**Skeleton:** `surface-raised` blocks with a 1.4s shimmer of `surface-hover`. The shimmer is disabled under reduced motion.
+**FilterTabs:** a white/3 track with a 1px white/8 hairline, inactive labels at white/50, the active label in white, and a **sliding 2px gradient underline** shared through `layoutId`.
 
-**Tabs / filters:** a pill group on `canvas-sunken` with a 1px hairline. The active pill is `surface-raised` with a 2px `brand` underline. The underline animates with `motion` `layoutId`, and that's the **only** Framer Motion use.
+**Skeletons:** white/4 blocks with a shimmer band (a white/6 gradient) translated across, transform only.
 
-**Inputs:** `surface-raised`, 1.5px `hairline-strong`, 44px tall, `rounded.sm`. Focus gives a `focus` ring and a `logo-blue` border. A ⌘K keycap sits on the right in peach.
+**AdSlot:** a fixed-height empty box (feed 250 / sidebar 600 / inline 280). It renders nothing.
+
+**Motion primitives**
+- **`Aurora`:** a slow gradient glow behind the hero. Three blurred radial blobs drift over a 24–32s cycle. Pure CSS transform.
+- **`WordReveal`:** the headline reveals word by word (opacity plus 0.4em rise, 60ms stagger). Pure CSS, so it doesn't wait for JS.
+- **`GradientText`:** a gradient word with a gentle shimmer, a white sheen band translated across it with `mix-blend-mode: overlay`.
+- **`Reveal`:** a scroll-triggered fade-up with a stagger for children (IntersectionObserver plus CSS transitions).
+- **`CountUp`:** numbers count up the first time they scroll into view. A hidden final-value layer reserves the width, so there's no CLS.
+- **`LiveDot`:** a pulsing gradient dot plus "updated X min ago".
+- **Page transition:** a short fade and rise on client-side navigations, skipped on first load.
 
 ## 5. Layout Principles
 
-- **Container:** max 1200px, 16px side gutter on mobile, 24px from `md` up.
-- **Home grid:** feed `minmax(0,1fr)` plus a 320px sidebar from `lg` up. Gap 32.
-- **Spacing:** 4px base scale (4/8/12/16/20/24/32/48/64). Sections are 80px apart (48px on mobile).
-- **Feed cards** stack at 12px gap. The sponsor card comes after #4 and then after every 7th card.
-- Each heading block = eyebrow (mono, yellow) → H1/H2 (amber) → sub-line (yellow) → content.
-- Numbers are right-aligned in tables and tiles, using tabular figures.
+- **Container:** max 1120px, with a 16px gutter on mobile and 24px from `md` up.
+- **Spacing:** generous. Sections are 128px apart on desktop and 80px on mobile. Card padding is 20–24px. Feed gap is 12px.
+- **Heading block:** mono eyebrow → Geist heading → Inter lead at white/64.
+- **Home (prompt 2):** feed `minmax(0,1fr)` plus a 320px sidebar from `lg` up.
+- **Numbers** are right-aligned and tabular in tiles and tables.
 
 ## 6. Depth & Elevation
 
-| Level | Dark | Light | Use |
-|---|---|---|---|
-| 0 Flat | no frame | no frame | Page, hero band |
-| 1 Framed | 1px `hairline` | 1px `light-hairline` | Inset wells, tables |
-| 2 Card | 1.5px `hairline-strong` + `3px 3px 0 #1E1650` | 2px `#11142A` + `4px 4px 0 #11142A` | Repo/sponsor cards, buttons, stat tiles |
-| 3 Lifted (hover) | translate(−2px,−2px) + `5px 5px 0 #3A24A8` | translate(−2px,−2px) + `6px 6px 0 #11142A` | Hover/focus-visible on level 2 |
-| Glow | 0 0 0 1.5px brand gradient | same | #1 card, selected states |
+| Level | Treatment | Use |
+|---|---|---|
+| 0 | Canvas, no border | Page, hero |
+| 1 | white/3 fill + 1px white/8 hairline + `backdrop-blur(16px)` | Cards, inputs, tab track |
+| 2 | white/6 fill + 1px white/10–16 | Hovered rows, active tab pill, popovers |
+| Glow | Brand-gradient radial layer, 10–35% opacity, blurred | Hero aurora, card spotlight, primary button halo |
+| Ring | 1px masked gradient ring (static on hover, rotating on #1) | Card hover, #1 repo, focus |
 
-There are no blurred drop shadows. Depth comes from offset, frame and surface steps.
+There are no drop shadows, no hard offset shadows and no borders thicker than 1px. A faint top-edge highlight (inset 1px white/6) on cards is allowed.
 
 ## 7. Do's and Don'ts
 
 **Do**
-- Use the exact logo stops for decorative gradient strokes, and `brand-strong` for anything carrying text.
-- Keep repo cards neutral and let the data stand out: name, growth pill, sparkline.
-- Rotate accents only on topic tags, badges and sponsor frames, with a stable hash per topic.
-- Put every growth number on a GrowthPill.
-- Set repo slugs, commands and counts in mono.
-- Label every paid unit "Sponsored" and link it with `rel="sponsored nofollow"`.
-- Reserve ad and image space with fixed dimensions (zero CLS).
-- Respect `prefers-reduced-motion`: no lift, no shimmer, instant tab changes.
+- Use only `#07070B`, `#FAFAFA` (at the opacity ladder) and the logo gradient.
+- Treat the gradient as light: glows, rings, the underline, key numbers, the primary fill.
+- Use 1px hairlines at white/8–10% and 12–16px radius.
+- Set repo names, numbers, languages and commands in mono.
+- Animate transform and opacity only, slowly. Respect `prefers-reduced-motion` by making every motion instant or static.
+- Reserve the space of anything that animates in (count-ups, reveals, ads), so there's no CLS.
+- Label paid units "Sponsored" with `rel="sponsored nofollow"`.
 
 **Don't**
-- Don't use a cream or beige page background with an orange primary button. That's another site's identity, not ours.
-- Don't fill large areas (hero backgrounds, whole cards) with the brand gradient.
-- Don't put body text in amber or yellow. Those colours are for headings and sub-lines only.
-- Don't use blurred, soft drop shadows, or white offset shadows on dark.
-- Don't show growth as bare green text, or show any colour without a text equivalent.
-- Don't copy another site's copy, name, logo or layout signatures.
+- Don't use any other hue: no orange, yellow, peach, green or red, and no coloured language dots.
+- Don't add a light mode or a theme toggle.
+- Don't use hard offset shadows, thick borders, neo-brutalist frames or drop shadows.
+- Don't put the gradient on large surfaces, body text or small gradient text (< 24px).
+- Don't animate width, height, top/left, filter or box-shadow, and don't loop motion fast.
+- Don't copy another site's copy, name, logo or look.
 
 ## 8. Responsive Behaviour
 
 | Breakpoint | Width | Changes |
 |---|---|---|
-| base | <640 | Single column; display 36px; cards hide the sparkline and show 2 tags max; filters scroll horizontally |
-| sm | ≥640 | Sparkline returns; 3 tags |
-| md | ≥768 | 24px gutters; stat tiles in 3 columns |
-| lg | ≥1024 | Sidebar column appears (sponsor, topics, languages) |
-| xl | ≥1280 | Container capped at 1200 |
+| base | < 640 | Display 40px, single column. Cards hide the sparkline and show 2 tags. Tabs scroll horizontally. Card glass blur is off (header only) to save GPU |
+| sm | ≥ 640 | Sparkline and 3 tags |
+| md | ≥ 768 | 24px gutters, card glass on |
+| lg | ≥ 1024 | Sidebar column, spotlight hover enabled (fine pointers only) |
 
-- Touch targets are at least 40px (buttons, tabs, tags have 24px visual height with a 40px hit area via padding).
-- On mobile the sidebar content moves below the feed, in this order: sponsor → topics → languages.
+- **Pointer effects:** magnetic and spotlight effects run only on `(hover: hover) and (pointer: fine)`.
+- **Touch targets:** at least 40px.
+- **Aurora on mobile:** smaller and lower opacity.
 
 ## 9. Agent Prompt Guide
 
-When building UI for GitRepos:
-1. Start dark. Use the CSS variables (`--gr-*`) defined in `app/globals.css`. Never hard-code hex values in components.
-2. Every page heading follows the same pattern: **mono yellow eyebrow → amber Sora heading → yellow Inter sub-line**.
-3. The primary action is `<Button variant="primary">` (`brand-strong` fill, white text). Use only one per view region.
-4. Repo data goes in `RepoCard`: neutral frame, mono name, `GrowthPill` for growth, `Sparkline` for the trend, `LanguageChip`, at most 4 `TopicTag`s.
-5. Hover lift is CSS (`.gr-lift`). Use `motion` only for tab/filter indicator transitions, always behind `useReducedMotion()`.
-6. Light mode is `[data-theme="light"]` on `<html>`. Check both themes and keep AA contrast (4.5:1 for text, 3:1 for UI strokes).
-7. Leave ad space with `<AdSlot kind="feed|sidebar|inline" />`. It renders an empty fixed-height box until AdSense is enabled in a later phase.
+1. Use the tokens in `app/globals.css`: `--gr-*` variables and Tailwind utilities such as `text-fg/64`, `border-fg/8`, `bg-fg/3`. Never introduce a hex beyond the three colours.
+2. Every section starts with **mono eyebrow → Geist heading → white/64 lead**.
+3. Use one primary `<Button>` per region. Everything else is secondary or ghost.
+4. Repo data always goes through `RepoCard`: mono name, GrowthPill, Sparkline, LanguageChip (mono, no dot), up to 4 outlined TopicTags.
+5. Wrap lists in `<Reveal stagger>` for the fade-up. Wrap stats in `<CountUp>`. Hero headlines use `<WordReveal>` and `<GradientText>` for one or two words.
+6. Use `motion` (lazy-loaded via `LazyMotion`, `m.*` components) only where springs or layout are needed: tabs `layoutId`, page transitions, count-ups. Everything else is CSS.
+7. Check reduced motion, no CLS, and AA contrast: white/50 is the lowest grey for content.
 
-Example prompt: *"Build a stat tile row for a repo page in the GitRepos system: four level-2 cards on `surface`, mono numbers in `ink`, captions in `mute`, and +today shown as a GrowthPill; amber H2 'Stats' with yellow sub-line 'Updated hourly from GH Archive'."*
+Example prompt: *"Build a stats row for a repo page in GitRepos v2: four level-1 glass tiles with white/8 hairlines, mono numbers wrapped in CountUp (the first one in gradient text), white/50 mono captions, +today shown with GrowthPill; heading 'Stats' in Geist 28/600 with a white/64 lead 'Updated hourly'."*

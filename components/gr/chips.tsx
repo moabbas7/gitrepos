@@ -1,46 +1,48 @@
 import Link from "next/link";
-import { accentFor, accentVar } from "@/lib/accents";
+import { useId, type ReactNode } from "react";
 import { compactNumber, PERIOD_LABEL, type Period } from "@/lib/format";
-import { languageColor } from "@/lib/languages";
 import { cn } from "@/lib/utils";
-import { softAccentStyle } from "./badges";
 
-/** Language: GitHub-colour dot + name. No fill (DESIGN.md §4). */
+/** Language: mono text only — no coloured dot (DESIGN.md §4). */
 export function LanguageChip({ language, className }: { language: string | null; className?: string }) {
   if (!language) return null;
-  return (
-    <span className={cn("inline-flex items-center gap-1.5 text-[13px] text-body", className)}>
-      <span
-        aria-hidden
-        className="size-2 shrink-0 rounded-full ring-1 ring-frame"
-        style={{ backgroundColor: languageColor(language) }}
-      />
-      {language}
-    </span>
-  );
+  return <span className={cn("font-mono text-xs text-fg/50", className)}>{language}</span>;
 }
 
-/** Topic tag with a stable rotating accent. Renders as a link when href is given. */
+/** Topic tag: outlined at white/10. Renders as a link when href is given. */
 export function TopicTag({ topic, href, className }: { topic: string; href?: string; className?: string }) {
   const cls = cn(
-    // 24px visual chip; padding-y on the link expands the hit area without changing layout.
-    "inline-flex h-6 items-center rounded-full px-2.5 font-mono text-xs font-medium whitespace-nowrap transition-colors",
+    "inline-flex h-6 items-center rounded-full border border-fg/10 px-2.5 font-mono text-xs text-fg/64 whitespace-nowrap transition-colors",
+    href && "hover:border-fg/16 hover:text-fg",
     className,
   );
-  const style = softAccentStyle(accentVar(accentFor(topic)));
-  const label = <>#{topic}</>;
   return href ? (
-    <Link href={href} className={cn(cls, "hover:brightness-125")} style={style}>
-      {label}
+    <Link href={href} className={cls}>
+      #{topic}
     </Link>
   ) : (
-    <span className={cls} style={style}>
-      {label}
-    </span>
+    <span className={cls}>#{topic}</span>
   );
 }
 
-/** Growth on a contrast-safe pill — never bare coloured text. */
+/** Small upward arrow filled with the brand gradient. */
+export function GradientArrow({ size = 9, className }: { size?: number; className?: string }) {
+  const id = `ga${useId().replace(/:/g, "")}`;
+  return (
+    <svg aria-hidden width={size} height={size} viewBox="0 0 10 10" className={cn("shrink-0", className)}>
+      <defs>
+        <linearGradient id={id} x1="0" x2="1" y1="1" y2="0">
+          <stop offset="0" stopColor="var(--gr-g1)" />
+          <stop offset="0.5" stopColor="var(--gr-g2)" />
+          <stop offset="1" stopColor="var(--gr-g3)" />
+        </linearGradient>
+      </defs>
+      <path d="M5 0.8 L9.6 9.2 L0.4 9.2 Z" fill={`url(#${id})`} />
+    </svg>
+  );
+}
+
+/** Growth: white mono number with a small gradient arrow, on a hairline pill. */
 export function GrowthPill({
   gained,
   period = "today",
@@ -52,35 +54,37 @@ export function GrowthPill({
   showPeriod?: boolean;
   className?: string;
 }) {
-  const label = `+${compactNumber(gained)}${showPeriod ? ` ${PERIOD_LABEL[period]}` : ""}`;
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center gap-1 rounded-full border border-growth-border bg-growth-bg px-2.5 font-mono text-xs font-bold tabular-nums whitespace-nowrap text-growth-fg",
+        "inline-flex h-6 items-center gap-1.5 rounded-full border border-fg/8 bg-fg/3 px-2.5 font-mono text-xs font-medium tabular-nums whitespace-nowrap text-fg",
         className,
       )}
-      aria-label={`${compactNumber(gained)} stars gained ${PERIOD_LABEL[period]}`}
     >
-      <span aria-hidden>▲</span>
-      <span aria-hidden>{label}</span>
+      <span className="sr-only">{`${compactNumber(gained)} stars gained ${PERIOD_LABEL[period]}`}</span>
+      <GradientArrow />
+      <span aria-hidden>
+        +{compactNumber(gained)}
+        {showPeriod && <span className="text-fg/50"> {PERIOD_LABEL[period]}</span>}
+      </span>
     </span>
   );
 }
 
-/** Mono "owner/repo" — owner muted, repo bright. */
+/** Mono "owner/repo" — owner at white/50, repo in white. */
 export function RepoName({ owner, name, className }: { owner: string; name: string; className?: string }) {
   return (
-    <span className={cn("font-mono text-base font-semibold leading-tight break-all", className)}>
-      <span className="text-mute">{owner}/</span>
-      <span className="text-ink">{name}</span>
+    <span className={cn("font-mono text-[15px] font-medium leading-tight break-all", className)}>
+      <span className="text-fg/50">{owner}/</span>
+      <span className="text-fg">{name}</span>
     </span>
   );
 }
 
-/** ⌘K style keycap in peach. */
-export function Keycap({ children }: { children: React.ReactNode }) {
+/** ⌘K style keycap. */
+export function Keycap({ children }: { children: ReactNode }) {
   return (
-    <kbd className="inline-flex h-5 items-center rounded-[5px] bg-peach px-1.5 font-mono text-[11px] font-semibold text-peach-ink">
+    <kbd className="inline-flex h-5 items-center rounded-[6px] border border-fg/10 bg-fg/6 px-1.5 font-mono text-[11px] font-medium text-fg/64">
       {children}
     </kbd>
   );

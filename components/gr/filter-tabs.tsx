@@ -1,12 +1,14 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { m } from "motion/react";
 import { useId } from "react";
 import { cn } from "@/lib/utils";
+import { MotionProvider } from "./motion-provider";
 
 /**
- * Pill tab group. The sliding underline is the ONLY Framer Motion (motion) usage in
- * the design system (DESIGN.md §4); it becomes instant under prefers-reduced-motion.
+ * Pill tab group with a sliding gradient underline shared via `layoutId`. Carries its own
+ * MotionProvider (lazy-loaded features), so pages without tabs ship no motion code.
+ * Instant under prefers-reduced-motion (MotionConfig reducedMotion="user").
  */
 export function FilterTabs<T extends string>({
   options,
@@ -21,44 +23,45 @@ export function FilterTabs<T extends string>({
   label: string;
   className?: string;
 }) {
-  const reduce = useReducedMotion();
   const group = useId();
   return (
-    <div
-      role="tablist"
-      aria-label={label}
-      className={cn(
-        "inline-flex max-w-full gap-1 overflow-x-auto rounded-full border border-hairline bg-canvas-sunken p-1",
-        className,
-      )}
-    >
-      {options.map((o) => {
-        const active = o.value === value;
-        return (
-          <button
-            key={o.value}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            onClick={() => onChange(o.value)}
-            className={cn(
-              "relative h-9 shrink-0 rounded-full px-4 text-sm font-medium transition-colors",
-              active ? "text-ink" : "text-mute hover:text-ink",
-            )}
-          >
-            {active && (
-              <motion.span
-                layoutId={`tab-${group}`}
-                transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 38 }}
-                className="absolute inset-0 rounded-full border border-frame bg-surface-raised"
-              >
-                <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full [background:var(--gr-grad-brand)]" />
-              </motion.span>
-            )}
-            <span className="relative">{o.label}</span>
-          </button>
-        );
-      })}
-    </div>
+    <MotionProvider>
+      <div
+        role="tablist"
+        aria-label={label}
+        className={cn(
+          "inline-flex max-w-full gap-1 overflow-x-auto rounded-full border border-fg/8 bg-fg/3 p-1",
+          className,
+        )}
+      >
+        {options.map((o) => {
+          const active = o.value === value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => onChange(o.value)}
+              className={cn(
+                "relative h-9 shrink-0 rounded-full px-4 text-sm font-medium transition-colors focus-visible:outline-offset-0",
+                active ? "text-fg" : "text-fg/50 hover:text-fg",
+              )}
+            >
+              {active && (
+                <m.span
+                  layoutId={`tab-${group}`}
+                  transition={{ type: "spring", stiffness: 420, damping: 36 }}
+                  className="absolute inset-0 rounded-full bg-fg/6 shadow-[inset_0_0_0_1px_rgb(250_250_250/0.08)]"
+                >
+                  <span className="absolute inset-x-4 -bottom-px h-0.5 rounded-full shadow-[0_0_12px_rgb(97_43_251/0.8)] [background:var(--gr-grad)]" />
+                </m.span>
+              )}
+              <span className="relative">{o.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </MotionProvider>
   );
 }

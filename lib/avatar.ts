@@ -5,7 +5,6 @@
 export function placeholderAvatarSvg(seed: string): string {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (Math.imul(31, h) + seed.charCodeAt(i)) | 0;
-  const hue = Math.abs(h) % 360;
   const cells: string[] = [];
   for (let y = 0; y < 5; y++) {
     for (let x = 0; x < 3; x++) {
@@ -15,7 +14,9 @@ export function placeholderAvatarSvg(seed: string): string {
       }
     }
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 7 7"><rect x="-1" y="-1" width="7" height="7" fill="hsl(${hue} 45% 14%)"/><g fill="hsl(${hue} 85% 65%)">${cells.join("")}</g></svg>`;
+  // Monochrome (DESIGN.md: three colours only) — white at opacity on the canvas black.
+  const alpha = 0.55 + (Math.abs(h) % 30) / 100;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 7 7"><rect x="-1" y="-1" width="7" height="7" fill="#07070B"/><g fill="#FAFAFA" fill-opacity="${alpha.toFixed(2)}">${cells.join("")}</g></svg>`;
 }
 
 export function placeholderAvatar(seed: string): string {

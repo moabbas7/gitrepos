@@ -1,14 +1,16 @@
 import { Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { accentFor, accentVar, type Accent } from "@/lib/accents";
+import type { Accent } from "@/lib/accents";
 import type { SponsorCardData } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Badge } from "./badges";
+import { SpotlightCard } from "./spotlight";
 
 /**
- * Sponsor card shell. Paid units are always labelled "Sponsored" and use
- * rel="sponsored nofollow". Click tracking (/go/[id]) arrives in prompt 2.
+ * Sponsor card shell: same glass frame + spotlight as RepoCard. Paid units are always labelled
+ * "Sponsored" and use rel="sponsored nofollow". `accent` is accepted for compatibility (v2 has no
+ * accent colours). Click tracking (/go/[id]) arrives in prompt 2.
  */
 export function SponsorCard({
   sponsor,
@@ -19,12 +21,9 @@ export function SponsorCard({
   accent?: Accent;
   className?: string;
 }) {
-  const color = accentVar(accent ?? accentFor(sponsor.company));
+  void accent;
   return (
-    <article
-      className={cn("gr-lift relative flex items-start gap-3 rounded-md bg-surface p-4 shadow-hard", className)}
-      style={{ border: `var(--gr-frame-width) solid color-mix(in oklab, ${color} 60%, transparent)` }}
-    >
+    <SpotlightCard as="article" className={cn("flex items-start gap-3 rounded-2xl p-4", className)}>
       {sponsor.logoUrl ? (
         <Image
           src={sponsor.logoUrl}
@@ -32,52 +31,51 @@ export function SponsorCard({
           width={40}
           height={40}
           unoptimized
-          className="size-10 shrink-0 rounded-sm border border-hairline bg-surface-raised object-contain"
+          className="size-10 shrink-0 rounded-xl border border-fg/8 bg-fg/6 object-contain"
         />
       ) : (
         <span
           aria-hidden
-          className="flex size-10 shrink-0 items-center justify-center rounded-sm font-heading text-lg font-bold"
-          style={{ color, backgroundColor: `color-mix(in oklab, ${color} 14%, transparent)` }}
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-fg/8 bg-fg/6 font-heading text-base font-semibold text-fg"
         >
           {sponsor.company.slice(0, 1)}
         </span>
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="m-0 font-sans text-[15px] font-semibold text-ink">
+          <h3 className="m-0 font-sans text-[15px] font-medium text-fg">
             <a
               href={sponsor.url}
               target="_blank"
               rel="sponsored nofollow noopener"
-              className="after:absolute after:inset-0 after:rounded-md focus-visible:outline-none"
+              className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
             >
               {sponsor.company}
             </a>
           </h3>
           <Badge kind="sponsored" />
         </div>
-        <p className="mt-1 line-clamp-2 text-sm text-body">{sponsor.tagline}</p>
+        <p className="mt-1 line-clamp-2 text-sm text-fg/64">{sponsor.tagline}</p>
       </div>
-    </article>
+    </SpotlightCard>
   );
 }
 
-/** Empty placement: dashed frame inviting advertisers. */
+/** Empty placement: dashed hairline frame inviting advertisers. */
 export function SponsorCardEmpty({ href = "/promote?tab=advertise", className }: { href?: string; className?: string }) {
   return (
     <Link
       href={href}
       className={cn(
-        "flex min-h-[92px] items-center gap-3 rounded-md border-[length:var(--gr-frame-width)] border-dashed border-frame p-4 text-mute transition-colors hover:bg-surface-hover hover:text-ink",
+        "group flex min-h-[92px] items-center gap-3 rounded-2xl border border-dashed border-fg/10 p-4 text-fg/50 transition-colors hover:border-fg/16 hover:bg-fg/3 hover:text-fg",
         className,
       )}
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-sm border border-dashed border-frame">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-dashed border-fg/16">
         <Plus className="size-4" aria-hidden />
       </span>
       <span>
-        <span className="block text-[15px] font-semibold text-ink">Advertise here</span>
+        <span className="block text-[15px] font-medium text-fg">Advertise here</span>
         <span className="block text-sm">Put your product in front of developers</span>
       </span>
     </Link>

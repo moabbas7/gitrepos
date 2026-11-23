@@ -107,7 +107,6 @@ npm run dev                       # http://localhost:3000/design
 npm run preview                   # same build running in workerd (the real Workers runtime) on :8787
 ```
 
-Add `?theme=light` to any URL to preview light mode.
 
 ### 2. Cloudflare (Workers Free plan, no card)
 

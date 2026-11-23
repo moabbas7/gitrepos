@@ -1,8 +1,12 @@
-/** Rotating accent palette — only for topic tags, badges and sponsor cards (DESIGN.md §2). */
+/**
+ * @deprecated GitRepos v2 has exactly three colours (DESIGN.md) and no rotating accents.
+ * The `Accent` type is kept so component props (AccentBadge, SponsorCard) stay compatible;
+ * the value is ignored when rendering.
+ */
 export const ACCENTS = ["cyan", "violet", "magenta", "amber", "lime", "peach"] as const;
 export type Accent = (typeof ACCENTS)[number];
 
-/** Stable accent for a string (e.g. a topic name) so #rust always looks the same. */
+/** Stable pick for a string. Kept for compatibility; v2 renders every accent neutrally. */
 export function accentFor(key: string): Accent {
   let h = 2166136261;
   for (let i = 0; i < key.length; i++) {
@@ -10,9 +14,4 @@ export function accentFor(key: string): Accent {
     h = Math.imul(h, 16777619);
   }
   return ACCENTS[(h >>> 0) % ACCENTS.length];
-}
-
-/** CSS variable for an accent; components derive fill/border via color-mix. */
-export function accentVar(a: Accent): string {
-  return `var(--gr-accent-${a})`;
 }

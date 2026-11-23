@@ -2,8 +2,8 @@ import { useId } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Tiny inline-SVG sparkline (no chart library). Decorative only: the numbers are shown
- * as text next to it, so it is aria-hidden. Server-renderable; zero JS shipped.
+ * Inline-SVG sparkline (no chart library, zero JS). Gradient stroke; draws in when an ancestor
+ * <Reveal> enters the viewport (stroke-dashoffset via CSS). Decorative: numbers are shown as text.
  */
 export function Sparkline({
   values,
@@ -30,22 +30,29 @@ export function Sparkline({
   const area = `${line} L${pts[pts.length - 1][0].toFixed(1)} ${height} L${pts[0][0].toFixed(1)} ${height} Z`;
 
   return (
-    <svg
-      aria-hidden
-      width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      className={cn("shrink-0 overflow-visible", className)}
-    >
+    <svg aria-hidden width={width} height={height} viewBox={`0 0 ${width} ${height}`} className={cn("shrink-0 overflow-visible", className)}>
       <defs>
         <linearGradient id={`s${id}`} x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0%" stopColor="var(--gr-logo-blue)" />
-          <stop offset="50%" stopColor="var(--gr-logo-violet)" />
-          <stop offset="100%" stopColor="var(--gr-logo-magenta)" />
+          <stop offset="0%" stopColor="var(--gr-g1)" />
+          <stop offset="50%" stopColor="var(--gr-g2)" />
+          <stop offset="100%" stopColor="var(--gr-g3)" />
+        </linearGradient>
+        <linearGradient id={`a${id}`} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="var(--gr-g2)" stopOpacity={0.22} />
+          <stop offset="100%" stopColor="var(--gr-g2)" stopOpacity={0} />
         </linearGradient>
       </defs>
-      <path d={area} fill={`url(#s${id})`} opacity={0.15} />
-      <path d={line} fill="none" stroke={`url(#s${id})`} strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={area} fill={`url(#a${id})`} className="gr-spark-area" />
+      <path
+        d={line}
+        pathLength={1}
+        fill="none"
+        stroke={`url(#s${id})`}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="gr-spark-line"
+      />
     </svg>
   );
 }

@@ -2,136 +2,77 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Dark is the default theme; light is opt-in via <html data-theme="light">. See DESIGN.md. */
-@custom-variant dark (&:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *));
-@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
+/*
+ * GitRepos v2 — see DESIGN.md. EXACTLY three colours:
+ *   black #07070B (canvas) · white #FAFAFA (text; greys = white at opacity) · logo gradient (accent)
+ * Dark only. Motion animates transform/opacity only and is disabled under prefers-reduced-motion.
+ */
+@custom-variant dark (&:where(*));
 
-/* ------------------------------------------------------------------ */
-/* GitRepos tokens (--gr-*) — single source of colour truth            */
-/* ------------------------------------------------------------------ */
 :root {
   color-scheme: dark;
 
-  /* Logo samples (brand/logo.png) */
-  --gr-logo-blue: #049dff;
-  --gr-logo-violet: #612bfb;
-  --gr-logo-purple: #9340ff;
-  --gr-logo-magenta: #fd26fe;
+  --gr-black: #07070b;
+  --gr-white: #fafafa;
+  --gr-g1: #049dff;
+  --gr-g2: #612bfb;
+  --gr-g3: #fd26fe;
 
-  --gr-grad-brand: linear-gradient(90deg, #049dff 0%, #612bfb 50%, #fd26fe 100%);
-  --gr-grad-strong: linear-gradient(90deg, #0677d6 0%, #5a22f0 55%, #c21bd0 100%);
-  --gr-grad-ring: conic-gradient(from 200deg, #049dff, #612bfb, #9340ff, #fd26fe, #612bfb, #049dff);
+  --gr-grad: linear-gradient(90deg, var(--gr-g1) 0%, var(--gr-g2) 50%, var(--gr-g3) 100%);
+  --gr-grad-conic: conic-gradient(from 0deg, var(--gr-g1), var(--gr-g2), var(--gr-g3), var(--gr-g2), var(--gr-g1));
+  /* White text on a gradient fill: gradient under a 30% veil of the canvas colour (AA at every stop). */
+  --gr-grad-veiled: linear-gradient(rgb(7 7 11 / 0.3), rgb(7 7 11 / 0.3)), var(--gr-grad);
 
-  /* Surfaces */
-  --gr-canvas: #080b16;
-  --gr-canvas-sunken: #05070f;
-  --gr-surface: #0e1224;
-  --gr-surface-raised: #141a33;
-  --gr-surface-hover: #1a2142;
-  --gr-hairline: #232a4a;
-  --gr-frame: #343d66;
-  --gr-frame-width: 1.5px;
+  /* white-at-opacity ladder (the only "greys") */
+  --gr-fg-64: rgb(250 250 250 / 0.64);
+  --gr-fg-50: rgb(250 250 250 / 0.5);
+  --gr-fg-28: rgb(250 250 250 / 0.28);
+  --gr-fg-16: rgb(250 250 250 / 0.16);
+  --gr-fg-10: rgb(250 250 250 / 0.1);
+  --gr-fg-08: rgb(250 250 250 / 0.08);
+  --gr-fg-06: rgb(250 250 250 / 0.06);
+  --gr-fg-03: rgb(250 250 250 / 0.03);
 
-  /* Text */
-  --gr-heading: #ffa733;
-  --gr-subline: #ffd84a;
-  --gr-ink: #f4f6ff;
-  --gr-body: #c9cee6;
-  --gr-mute: #8c93b8;
-  --gr-ash: #5d648a;
+  --gr-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* Semantic */
-  --gr-peach: #ffe2c6;
-  --gr-peach-ink: #2a1606;
-  --gr-growth-bg: #0e3b2b;
-  --gr-growth-fg: #5bf0a6;
-  --gr-growth-border: #1d6b4b;
-  --gr-hot: #ff5a36;
-  --gr-danger: #ff6b6b;
-  --gr-focus: #7cc8ff;
-
-  /* Rotating accents (tags / badges / sponsor cards only) */
-  --gr-accent-cyan: #38bdf8;
-  --gr-accent-violet: #a78bfa;
-  --gr-accent-magenta: #f472d0;
-  --gr-accent-amber: #ffb547;
-  --gr-accent-lime: #a3e635;
-  --gr-accent-peach: #ffc9a3;
-
-  /* Elevation (hard offset, no blur) */
-  --gr-shadow-rest: 3px 3px 0 0 #1e1650;
-  --gr-shadow-hover: 5px 5px 0 0 #3a24a8;
-  --gr-shadow-press: 1px 1px 0 0 #1e1650;
-
-  /* shadcn semantic mapping */
-  --background: var(--gr-canvas);
-  --foreground: var(--gr-ink);
-  --card: var(--gr-surface);
-  --card-foreground: var(--gr-ink);
-  --popover: var(--gr-surface-raised);
-  --popover-foreground: var(--gr-ink);
-  --primary: #5a22f0;
-  --primary-foreground: #ffffff;
-  --secondary: var(--gr-surface-raised);
-  --secondary-foreground: var(--gr-ink);
-  --muted: var(--gr-surface-raised);
-  --muted-foreground: var(--gr-mute);
-  --accent: var(--gr-surface-hover);
-  --accent-foreground: var(--gr-ink);
-  --destructive: var(--gr-danger);
-  --border: var(--gr-hairline);
-  --input: var(--gr-frame);
-  --ring: var(--gr-focus);
-  --chart-1: var(--gr-logo-blue);
-  --chart-2: var(--gr-logo-violet);
-  --chart-3: var(--gr-logo-magenta);
-  --chart-4: var(--gr-heading);
-  --chart-5: var(--gr-growth-fg);
+  /* shadcn semantic mapping (only the three colours) */
+  --background: var(--gr-black);
+  --foreground: var(--gr-white);
+  --card: var(--gr-fg-03);
+  --card-foreground: var(--gr-white);
+  --popover: var(--gr-black);
+  --popover-foreground: var(--gr-white);
+  --primary: var(--gr-g2);
+  --primary-foreground: var(--gr-white);
+  --secondary: var(--gr-fg-06);
+  --secondary-foreground: var(--gr-white);
+  --muted: var(--gr-fg-06);
+  --muted-foreground: var(--gr-fg-64);
+  --accent: var(--gr-fg-06);
+  --accent-foreground: var(--gr-white);
+  --destructive: var(--gr-white);
+  --border: var(--gr-fg-08);
+  --input: var(--gr-fg-10);
+  --ring: var(--gr-g1);
+  --chart-1: var(--gr-g1);
+  --chart-2: var(--gr-g2);
+  --chart-3: var(--gr-g3);
+  --chart-4: var(--gr-fg-64);
+  --chart-5: var(--gr-fg-28);
   --radius: 0.75rem;
-}
-
-:root[data-theme="light"] {
-  color-scheme: light;
-
-  --gr-canvas: #f5f6fb;
-  --gr-canvas-sunken: #eceef7;
-  --gr-surface: #ffffff;
-  --gr-surface-raised: #eef0f8;
-  --gr-surface-hover: #e6e9f5;
-  --gr-hairline: #d6d9ea;
-  --gr-frame: #11142a;
-  --gr-frame-width: 2px;
-
-  --gr-heading: #b45309;
-  --gr-subline: #8a5a00;
-  --gr-ink: #0b0e1c;
-  --gr-body: #2c3150;
-  --gr-mute: #5a6080;
-  --gr-ash: #9aa0bd;
-
-  --gr-growth-bg: #dcfce9;
-  --gr-growth-fg: #0b6b3a;
-  --gr-growth-border: #86e0ae;
-  --gr-hot: #c2410c;
-  --gr-danger: #b91c1c;
-  --gr-focus: #0677d6;
-
-  --gr-accent-cyan: #0369a1;
-  --gr-accent-violet: #6d28d9;
-  --gr-accent-magenta: #a21caf;
-  --gr-accent-amber: #b45309;
-  --gr-accent-lime: #3f6212;
-  --gr-accent-peach: #9a3412;
-
-  --gr-shadow-rest: 4px 4px 0 0 #11142a;
-  --gr-shadow-hover: 6px 6px 0 0 #11142a;
-  --gr-shadow-press: 1px 1px 0 0 #11142a;
 }
 
 @theme inline {
   --font-sans: var(--font-inter);
-  --font-heading: var(--font-sora);
+  --font-heading: var(--font-geist);
   --font-mono: var(--font-jetbrains);
+
+  /* text-fg/64, border-fg/8, bg-fg/3 ... */
+  --color-fg: var(--gr-white);
+  --color-bg: var(--gr-black);
+  --color-g1: var(--gr-g1);
+  --color-g2: var(--gr-g2);
+  --color-g3: var(--gr-g3);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -157,158 +98,446 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
-  /* GitRepos utilities: bg-canvas, text-heading, border-frame, ... */
-  --color-canvas: var(--gr-canvas);
-  --color-canvas-sunken: var(--gr-canvas-sunken);
-  --color-surface: var(--gr-surface);
-  --color-surface-raised: var(--gr-surface-raised);
-  --color-surface-hover: var(--gr-surface-hover);
-  --color-hairline: var(--gr-hairline);
-  --color-frame: var(--gr-frame);
-  --color-heading: var(--gr-heading);
-  --color-subline: var(--gr-subline);
-  --color-ink: var(--gr-ink);
-  --color-body: var(--gr-body);
-  --color-mute: var(--gr-mute);
-  --color-ash: var(--gr-ash);
-  --color-peach: var(--gr-peach);
-  --color-peach-ink: var(--gr-peach-ink);
-  --color-growth-bg: var(--gr-growth-bg);
-  --color-growth-fg: var(--gr-growth-fg);
-  --color-growth-border: var(--gr-growth-border);
-  --color-hot: var(--gr-hot);
-  --color-focus: var(--gr-focus);
-  --color-logo-blue: var(--gr-logo-blue);
-  --color-logo-violet: var(--gr-logo-violet);
-  --color-logo-magenta: var(--gr-logo-magenta);
-
-  --shadow-hard: var(--gr-shadow-rest);
-  --shadow-hard-hover: var(--gr-shadow-hover);
-  --shadow-hard-press: var(--gr-shadow-press);
-
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
+
+  --ease-gr: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   html {
     @apply font-sans;
-    background: var(--gr-canvas);
+    background: var(--gr-black);
   }
   body {
-    background: var(--gr-canvas);
-    color: var(--gr-ink);
+    background: var(--gr-black);
+    color: var(--gr-white);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   h1,
   h2,
-  h3 {
+  h3,
+  h4 {
     font-family: var(--font-heading);
-    color: var(--gr-heading);
+    font-weight: 600;
+    color: var(--gr-white);
     text-wrap: balance;
+  }
+  ::selection {
+    background: rgb(97 43 251 / 0.45);
+    color: var(--gr-white);
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+  /* Fallback focus ring: solid logo blue (7:1). Buttons/tabs/cards add a gradient ring. */
   :focus-visible {
-    outline: 2px solid var(--gr-focus);
+    outline: 2px solid var(--gr-g1);
     outline-offset: 2px;
   }
 }
 
 @layer components {
-  /* Level-2 framed card (DESIGN.md §6) */
-  .gr-frame {
-    background: var(--gr-surface);
-    border: var(--gr-frame-width) solid var(--gr-frame);
-    box-shadow: var(--gr-shadow-rest);
+  /* ---------- surfaces ---------- */
+  .gr-glass {
+    background: var(--gr-fg-03);
+    border: 1px solid var(--gr-fg-08);
+    box-shadow: inset 0 1px 0 0 var(--gr-fg-06);
   }
-  /* CSS-only hover lift (no JS animation) */
-  .gr-lift {
-    transition:
-      transform 160ms ease-out,
-      box-shadow 160ms ease-out,
-      background-color 160ms ease-out;
+  @media (min-width: 768px) {
+    .gr-glass {
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+    }
   }
-  .gr-lift:hover,
-  .gr-lift:focus-within {
-    transform: translate(-2px, -2px);
-    box-shadow: var(--gr-shadow-hover);
+  .gr-header-glass {
+    background: rgb(7 7 11 / 0.6);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    backdrop-filter: blur(20px) saturate(140%);
+    border-bottom: 1px solid var(--gr-fg-08);
   }
-  .gr-lift:active {
-    transform: translate(0, 0);
-    box-shadow: var(--gr-shadow-press);
-  }
-  /* 1.5px brand-gradient outline (used on the #1 card) */
-  .gr-ring-brand {
-    border-color: transparent;
-    background:
-      linear-gradient(var(--gr-surface), var(--gr-surface)) padding-box,
-      var(--gr-grad-brand) border-box;
-  }
+
+  /* ---------- gradient text + shimmer ---------- */
   .gr-grad-text {
-    background: var(--gr-grad-brand);
+    background: var(--gr-grad);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
+  /* Sheen band translated across the word; overlay blend only brightens the (non-black) glyphs. */
+  .gr-shimmer {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: bottom;
+    padding-bottom: 0.08em; /* keep descenders inside the clip */
+  }
+  .gr-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 40%;
+    background: linear-gradient(100deg, transparent 0%, rgb(250 250 250 / 0.75) 50%, transparent 100%);
+    mix-blend-mode: overlay;
+    transform: translateX(-120%);
+    animation: gr-sheen 5.5s var(--gr-ease) 1.6s infinite;
+    pointer-events: none;
+  }
+
+  /* ---------- gradient rings (masked 1px border) ---------- */
+  .gr-ring,
+  .gr-ring-hover::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--gr-grad);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+    pointer-events: none;
+  }
+  .gr-ring-hover {
+    position: relative;
+  }
+  .gr-ring-hover::before {
+    opacity: 0;
+    transition: opacity 320ms var(--gr-ease);
+  }
+  .gr-ring-hover:hover::before,
+  .gr-ring-hover:focus-within::before {
+    opacity: 1;
+  }
+
+  /* Animated border for the #1 repo: a conic gradient rotating inside a masked ring. */
+  .gr-ring-spin {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    overflow: hidden;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+    pointer-events: none;
+  }
+  .gr-ring-spin::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(150%, 600px);
+    aspect-ratio: 1;
+    background: var(--gr-grad-conic);
+    transform: translate(-50%, -50%) rotate(0deg);
+    animation: gr-spin 12s linear infinite;
+  }
+
+  /* ---------- spotlight (a glow layer translated to the cursor) ---------- */
+  .gr-spot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 360px;
+    height: 360px;
+    border-radius: 9999px;
+    background: radial-gradient(closest-side, rgb(97 43 251 / 0.22), rgb(4 157 255 / 0.08) 55%, transparent 100%);
+    opacity: 0;
+    transform: translate3d(var(--spot-x, -999px), var(--spot-y, -999px), 0);
+    transition: opacity 320ms var(--gr-ease);
+    pointer-events: none;
+    will-change: transform;
+  }
+  [data-spot-active] > .gr-spot {
+    opacity: 1;
+  }
+
+  /* ---------- glows ---------- */
+  .gr-glow {
+    position: absolute;
+    inset: -10px;
+    border-radius: inherit;
+    background: var(--gr-grad);
+    filter: blur(18px);
+    opacity: 0.35;
+    transition: opacity 320ms var(--gr-ease);
+    pointer-events: none;
+    z-index: -10;
+  }
+  .group:hover > .gr-glow,
+  .group:focus-visible > .gr-glow {
+    opacity: 0.6;
+  }
+
+  /* ---------- magnetic / press (buttons) ---------- */
+  .gr-magnetic {
+    transform: translate3d(var(--mag-x, 0px), var(--mag-y, 0px), 0) scale(var(--press, 1));
+    transition: transform 360ms var(--gr-ease);
+    will-change: transform;
+  }
+  .gr-magnetic[data-magnet-active] {
+    transition: transform 120ms linear;
+  }
+  .gr-magnetic:active {
+    --press: 0.97;
+  }
+
+  /* ---------- aurora ---------- */
+  .gr-aurora {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 75%);
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 75%);
+  }
+  .gr-aurora > span {
+    position: absolute;
+    width: 46vmax;
+    height: 46vmax;
+    border-radius: 9999px;
+    opacity: 0.32;
+    will-change: transform;
+  }
+  .gr-aurora > span:nth-child(1) {
+    left: 8%;
+    top: -18%;
+    background: radial-gradient(closest-side, var(--gr-g1), transparent);
+    animation: gr-drift-a 26s ease-in-out infinite alternate;
+  }
+  .gr-aurora > span:nth-child(2) {
+    left: 32%;
+    top: -26%;
+    background: radial-gradient(closest-side, var(--gr-g2), transparent);
+    animation: gr-drift-b 32s ease-in-out infinite alternate;
+  }
+  .gr-aurora > span:nth-child(3) {
+    right: 4%;
+    top: -14%;
+    background: radial-gradient(closest-side, var(--gr-g3), transparent);
+    opacity: 0.24;
+    animation: gr-drift-c 29s ease-in-out infinite alternate;
+  }
+  @media (max-width: 767px) {
+    .gr-aurora > span {
+      width: 80vmax;
+      height: 80vmax;
+      opacity: 0.22;
+    }
+  }
+
+  /* ---------- word-by-word reveal (CSS-only: no JS needed for the hero) ---------- */
+  .gr-word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(0.4em);
+    animation: gr-word-in 700ms var(--gr-ease) forwards;
+    animation-delay: calc(var(--w, 0) * 60ms + 80ms);
+  }
+
+  /* ---------- scroll reveal (only hides content when JS is running) ---------- */
+  .gr-reveal-item {
+    transition:
+      opacity 700ms var(--gr-ease),
+      transform 700ms var(--gr-ease);
+    transition-delay: calc(var(--i, 0) * 70ms);
+  }
+  .js [data-reveal]:not([data-shown]) .gr-reveal-item,
+  .js [data-reveal]:not([data-shown]).gr-reveal-item {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  /* ---------- sparkline draw-in ---------- */
+  .gr-spark-line {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1200ms var(--gr-ease) 200ms;
+  }
+  .gr-spark-area {
+    transition: opacity 900ms var(--gr-ease) 700ms;
+  }
+  .js [data-reveal]:not([data-shown]) .gr-spark-line {
+    stroke-dashoffset: 1;
+  }
+  .js [data-reveal]:not([data-shown]) .gr-spark-area {
+    opacity: 0;
+  }
+
+  /* ---------- live dot ---------- */
+  .gr-live-dot {
+    position: relative;
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: var(--gr-grad);
+  }
+  .gr-live-dot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--gr-grad);
+    animation: gr-ping 2.4s var(--gr-ease) infinite;
+  }
+
+  /* ---------- skeleton shimmer ---------- */
+  .gr-skeleton {
+    position: relative;
+    overflow: hidden;
+    background: rgb(250 250 250 / 0.04);
+  }
+  .gr-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, var(--gr-fg-06), transparent);
+    transform: translateX(-100%);
+    animation: gr-skeleton 1.6s ease-in-out infinite;
+  }
+
+  /* ---------- page transition (client navigations only) ---------- */
+  .gr-page-enter {
+    animation: gr-page-in 360ms var(--gr-ease);
+  }
+
   .gr-eyebrow {
     font-family: var(--font-mono);
     font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--gr-subline);
-  }
-  .gr-subline {
-    color: var(--gr-subline);
     font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gr-fg-50);
   }
   .gr-num {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
   }
-  .gr-shimmer {
-    background: linear-gradient(
-      90deg,
-      var(--gr-surface-raised) 0%,
-      var(--gr-surface-hover) 50%,
-      var(--gr-surface-raised) 100%
-    );
-    background-size: 200% 100%;
-    animation: gr-shimmer 1.4s linear infinite;
-  }
 }
 
-@keyframes gr-shimmer {
+@keyframes gr-sheen {
+  0% {
+    transform: translateX(-120%);
+  }
+  45%,
+  100% {
+    transform: translateX(320%);
+  }
+}
+@keyframes gr-spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+@keyframes gr-drift-a {
   from {
-    background-position: 200% 0;
+    transform: translate3d(-4%, 0, 0) scale(1);
   }
   to {
-    background-position: -200% 0;
+    transform: translate3d(10%, 8%, 0) scale(1.15);
+  }
+}
+@keyframes gr-drift-b {
+  from {
+    transform: translate3d(6%, 4%, 0) scale(1.1);
+  }
+  to {
+    transform: translate3d(-8%, -4%, 0) scale(0.95);
+  }
+}
+@keyframes gr-drift-c {
+  from {
+    transform: translate3d(0, 6%, 0) scale(0.95);
+  }
+  to {
+    transform: translate3d(-12%, -2%, 0) scale(1.12);
+  }
+}
+@keyframes gr-word-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes gr-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  80%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+@keyframes gr-skeleton {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes gr-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gr-lift,
-  .gr-lift:hover,
-  .gr-lift:focus-within,
-  .gr-lift:active {
-    transition: none;
+  .gr-shimmer::after,
+  .gr-ring-spin::before,
+  .gr-aurora > span,
+  .gr-live-dot::after,
+  .gr-skeleton::after,
+  .gr-page-enter {
+    animation: none !important;
+  }
+  .gr-word {
+    animation: none;
+    opacity: 1;
     transform: none;
   }
-  .gr-shimmer {
-    animation: none;
+  .gr-reveal-item,
+  .gr-spark-line,
+  .gr-spark-area,
+  .gr-spot,
+  .gr-ring-hover::before {
+    transition: none !important;
   }
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
+  .js [data-reveal]:not([data-shown]) .gr-reveal-item,
+  .js [data-reveal]:not([data-shown]).gr-reveal-item {
+    opacity: 1;
+    transform: none;
+  }
+  .js [data-reveal]:not([data-shown]) .gr-spark-line {
+    stroke-dashoffset: 0;
+  }
+  .js [data-reveal]:not([data-shown]) .gr-spark-area {
+    opacity: 1;
+  }
+  .gr-magnetic {
+    transform: none !important;
+    transition: none;
   }
 }
