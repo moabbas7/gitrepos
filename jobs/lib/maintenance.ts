@@ -29,14 +29,25 @@ export async function rankedRepoIds(db: Db): Promise<Set<number>> {
   return ids;
 }
 
-/** Removes repos not refreshed since `cutoffIso` that aren't in any current ranking. */
-export async function pruneStaleRepos(db: Db, cutoffIso: string, budget?: WriteBudget, max = 2000): Promise<number> {
+/**
+ * Removes repos not refreshed since `cutoffIso` that aren't in any current ranking.
+ * `keep` protects more ids — the repo pages the next build prerenders (jobs/lib/pages.ts), so a
+ * published page never loses its data. Published repos that the page selection has retired
+ * (asset-file cap) are not in `keep` and may be pruned once stale.
+ */
+export async function pruneStaleRepos(
+  db: Db,
+  cutoffIso: string,
+  budget?: WriteBudget,
+  max = 2000,
+  keep: ReadonlySet<number> = new Set(),
+): Promise<number> {
   const ranked = await rankedRepoIds(db);
   const stale = await db.all<{ id: number }>(
     "SELECT id FROM repos WHERE COALESCE(meta_refreshed_at, updated_at) < ? LIMIT ?",
     [cutoffIso, max],
   );
-  const ids = stale.map((r) => r.id).filter((id) => !ranked.has(id));
+  const ids = stale.map((r) => r.id).filter((id) => !ranked.has(id) && !keep.has(id));
   for (const chunk of inClauseChunks(ids)) {
     budget?.check(chunk.length * 2);
     await db.run(`DELETE FROM repos WHERE id IN (${placeholders(chunk)})`, chunk);

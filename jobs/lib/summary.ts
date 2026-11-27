@@ -133,17 +133,22 @@ export interface GeminiOptions {
   fetchImpl?: typeof fetch;
 }
 
-export async function geminiSummary(r: SummaryInput, opts: GeminiOptions = {}): Promise<SummaryResult> {
+export interface GeminiTextResult {
+  text: string | null;
+  rateLimited?: boolean;
+  /** Why no text came back (for job logs). */
+  reason?: string;
+}
+
+/**
+ * One Gemini text generation: the Interactions API first, then generateContent. Never throws.
+ * Shared by repo summaries and digest intros.
+ */
+export async function geminiText(system: string, prompt: string, opts: GeminiOptions = {}): Promise<GeminiTextResult> {
   const apiKey = opts.apiKey ?? config.geminiApiKey;
   const model = opts.model ?? config.geminiModel;
   const fetchImpl = opts.fetchImpl ?? fetch;
-  const fallback = (reason: string, rateLimited = false): SummaryResult => ({
-    text: templateSummary(r),
-    source: "template",
-    fallbackReason: reason,
-    rateLimited,
-  });
-  if (!apiKey) return fallback("no GEMINI_API_KEY");
+  if (!apiKey) return { text: null, reason: "no GEMINI_API_KEY" };
 
   const headers = { "Content-Type": "application/json", "x-goog-api-key": apiKey };
   const attempts: { url: string; body: unknown }[] = [
@@ -152,8 +157,8 @@ export async function geminiSummary(r: SummaryInput, opts: GeminiOptions = {}): 
       url: "https://generativelanguage.googleapis.com/v1beta/interactions",
       body: {
         model,
-        input: promptFor(r),
-        system_instruction: SYSTEM,
+        input: prompt,
+        system_instruction: system,
         store: false,
         generation_config: { max_output_tokens: 1024 },
       },
@@ -162,8 +167,8 @@ export async function geminiSummary(r: SummaryInput, opts: GeminiOptions = {}): 
     {
       url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
       body: {
-        systemInstruction: { parts: [{ text: SYSTEM }] },
-        contents: [{ role: "user", parts: [{ text: promptFor(r) }] }],
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
         generationConfig: { maxOutputTokens: 1024 },
       },
     },
@@ -173,19 +178,31 @@ export async function geminiSummary(r: SummaryInput, opts: GeminiOptions = {}): 
   for (const a of attempts) {
     try {
       const res = await fetchImpl(a.url, { method: "POST", headers, body: JSON.stringify(a.body) });
-      if (res.status === 429) return fallback("gemini 429 (rate/quota limited)", true);
+      if (res.status === 429) return { text: null, rateLimited: true, reason: "gemini 429 (rate/quota limited)" };
       if (res.status === 404 || res.status === 400) {
         lastReason = `gemini HTTP ${res.status} at ${new URL(a.url).pathname}`;
         continue; // try the other API surface
       }
-      if (!res.ok) return fallback(`gemini HTTP ${res.status}`);
+      if (!res.ok) return { text: null, reason: `gemini HTTP ${res.status}` };
       const text = extractText(await res.json());
-      const clean = text ? cleanSummary(text) : null;
-      if (!clean) return fallback("gemini returned no usable text");
-      return { text: clean, source: "ai" };
+      return text ? { text } : { text: null, reason: "gemini returned no usable text" };
     } catch (e) {
       lastReason = `gemini error: ${(e as Error).message}`;
     }
   }
-  return fallback(lastReason);
+  return { text: null, reason: lastReason };
+}
+
+export async function geminiSummary(r: SummaryInput, opts: GeminiOptions = {}): Promise<SummaryResult> {
+  const fallback = (reason: string, rateLimited = false): SummaryResult => ({
+    text: templateSummary(r),
+    source: "template",
+    fallbackReason: reason,
+    rateLimited,
+  });
+  const res = await geminiText(SYSTEM, promptFor(r), opts);
+  if (!res.text) return fallback(res.reason ?? "unknown", !!res.rateLimited);
+  const clean = cleanSummary(res.text);
+  if (!clean) return fallback("gemini returned no usable text");
+  return { text: clean, source: "ai" };
 }

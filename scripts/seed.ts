@@ -6,9 +6,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { createInterface } from "node:readline/promises";
-import { placeholderAvatarSvg } from "@/lib/avatar";
 import { DEFAULT_RANK_CONFIG, rankAll, type Candidate } from "../jobs/lib/rank-core";
 import { lit } from "../jobs/lib/sql";
 import type { RepoMeta } from "../jobs/lib/types";
@@ -75,7 +73,7 @@ function makeRepos(n: number): SeedRepo[] {
       watchers: Math.round(stars * 0.01) + 1,
       licence: pick(["MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause", null]),
       homepage: rnd() < 0.4 ? `https://example.com/${name}` : null,
-      avatarUrl: `/seed-avatars/${owner}.svg`, // short path; real data uses avatars.githubusercontent.com
+      avatarUrl: "/logo.png", // fictional repos never point at real GitHub accounts; real data uses avatars.githubusercontent.com
       createdAt: created.toISOString(),
       pushedAt: new Date(NOW.getTime() - Math.floor(rnd() * 5) * DAY).toISOString(),
       isArchived: false,
@@ -166,14 +164,11 @@ function main() {
   sql.push(`INSERT INTO campaigns (id, type, placement, package, status, company, tagline, url, email, price_cents, stats_token, created_at, updated_at) VALUES (${["seed-camp-2", "sponsor", "feed", "sponsor_feed_7d", "in_review", "Lumen CI", "Fast CI runners with cached Docker layers and flat pricing.", "https://example.com", "ads@example.org", 4900, "seedtoken-camp-2", nowIso, nowIso].map(lit).join(", ")});`);
   sql.push(`INSERT INTO promo_orders (id, product, repo_full_name, name, email, status, price_cents, stats_token, created_at, updated_at) VALUES (${["seed-order-1", "reel", `${repos[0].owner}/${repos[0].name}`, "Sample Maker", "maker@example.com", "queued", 500, "seedtoken-order-1", nowIso, nowIso].map(lit).join(", ")});`);
 
+  // Seed data has 90 days of history, so date the first run 90 days back (drives "tracking since").
+  const firstRun = new Date(NOW.getTime() - 90 * DAY).toISOString();
   for (const job of ["ingest-gharchive", "rank", "refresh-metadata", "snapshot", "rollup-and-prune", "summaries"]) {
-    sql.push(`INSERT INTO job_runs (job, started_at, ended_at, status, source, rows_written, meta) VALUES (${[job, nowIso, nowIso, "success", "seed", 0, '{"seed":true}'].map(lit).join(", ")});`);
+    sql.push(`INSERT INTO job_runs (job, started_at, ended_at, status, source, rows_written, meta) VALUES (${[job, firstRun, firstRun, "success", "seed", 0, '{"seed":true}'].map(lit).join(", ")});`);
   }
-
-  // Placeholder avatars as tiny static files (keeps ranking payloads well under D1's 100 KB statement limit).
-  const avatarDir = join("public", "seed-avatars");
-  mkdirSync(avatarDir, { recursive: true });
-  for (const o of OWNERS) writeFileSync(join(avatarDir, `${o}.svg`), placeholderAvatarSvg(o));
 
   mkdirSync(".data", { recursive: true });
   writeFileSync(".data/seed.sql", sql.join("\n") + "\n");

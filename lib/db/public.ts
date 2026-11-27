@@ -26,7 +26,6 @@ export interface RepoRow {
   pushed_at: string | null;
   summary: string | null;
   summary_source: "ai" | "template" | null;
-  readme_excerpt: string | null;
   is_archived: number;
   is_fork: number;
   is_spam: number;
@@ -34,6 +33,7 @@ export interface RepoRow {
   gained_7d: number;
   gained_30d: number;
   rank_today: number | null;
+  first_published_at: string | null;
   updated_at: string;
 }
 
@@ -62,9 +62,11 @@ export interface Digest {
   publishedAt: string;
 }
 
+// No readme_excerpt: public pages never show README text (copied third-party content). It stays in
+// D1 only as input for the original AI summaries.
 const PUBLIC_REPO_COLUMNS = `id, owner, name, full_name, description, language, topics, stars, forks, issues,
-  watchers, licence, homepage, avatar_url, created_at, pushed_at, summary, summary_source, readme_excerpt,
-  is_archived, is_fork, is_spam, gained_24h, gained_7d, gained_30d, rank_today, updated_at`;
+  watchers, licence, homepage, avatar_url, created_at, pushed_at, summary, summary_source,
+  is_archived, is_fork, is_spam, gained_24h, gained_7d, gained_30d, rank_today, first_published_at, updated_at`;
 
 export function parseJsonArray<T>(s: string | null | undefined, fallback: T[] = []): T[] {
   if (!s) return fallback;
@@ -193,4 +195,70 @@ export async function listDigests(db: Db): Promise<Digest[]> {
 export async function countPublishedRepos(db: Db): Promise<number> {
   const r = await db.first<{ n: number }>("SELECT COUNT(*) AS n FROM repos WHERE is_spam = 0");
   return r?.n ?? 0;
+}
+
+// ---------------------------------------------------------------------------
+// Page selection inputs (prompt 2: stable pages)
+// ---------------------------------------------------------------------------
+
+export interface PageCandidateRow {
+  id: number;
+  first_published_at: string | null;
+  gained_30d: number;
+  gained_7d: number;
+  stars: number;
+}
+
+/** Lean rows for every non-spam repo; the build picks which get pages (lib/site-data/select-pages). */
+export async function listPageCandidates(db: Db): Promise<PageCandidateRow[]> {
+  return db.all<PageCandidateRow>(
+    "SELECT id, first_published_at, gained_30d, gained_7d, stars FROM repos WHERE is_spam = 0",
+  );
+}
+
+/** Full public rows for the given ids (chunked to D1's 100-parameter limit). */
+export async function getReposByIds(db: Db, ids: readonly number[]): Promise<RepoRow[]> {
+  const out: RepoRow[] = [];
+  for (const chunk of inClauseChunks(ids)) {
+    out.push(...(await db.all<RepoRow>(`SELECT ${PUBLIC_REPO_COLUMNS} FROM repos WHERE id IN (${placeholders(chunk)})`, chunk)));
+  }
+  return out;
+}
+
+/** Repo ids whose pages must be built (paid promos / manual pins), unexpired at `nowIso`. */
+export async function listPinnedRepoIds(db: Db, nowIso: string): Promise<number[]> {
+  const rows = await db.all<{ repo_id: number }>("SELECT repo_id FROM page_pins WHERE until IS NULL OR until > ?", [nowIso]);
+  return rows.map((r) => r.repo_id);
+}
+
+/**
+ * When the pipeline first ranked anything — the start of star history. Uses the job_runs
+ * started_at index (stops at the first matching row), not a scan of repo_daily.
+ */
+export async function trackingSince(db: Db): Promise<string | null> {
+  const r = await db.first<{ started_at: string }>(
+    "SELECT started_at FROM job_runs WHERE job = 'rank' AND status IN ('success', 'partial') ORDER BY started_at LIMIT 1",
+  );
+  return r?.started_at ?? null;
+}
+
+/** Latest date in ranking_history (cheap: date is the leading primary-key column). */
+export async function latestRankingHistoryDate(db: Db): Promise<string | null> {
+  return (await db.first<{ d: string | null }>("SELECT MAX(date) AS d FROM ranking_history"))?.d ?? null;
+}
+
+export interface RankingHistoryRow {
+  date: string;
+  list_type: string;
+  period: string;
+  rank: number;
+  repo_id: number;
+  gained: number;
+}
+
+export async function listRankingHistory(db: Db, sinceDate: string): Promise<RankingHistoryRow[]> {
+  return db.all<RankingHistoryRow>(
+    "SELECT date, list_type, period, rank, repo_id, gained FROM ranking_history WHERE date >= ? ORDER BY date, list_type, period, rank",
+    [sinceDate],
+  );
 }

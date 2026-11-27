@@ -73,7 +73,7 @@ describe("checkRemote", () => {
   it("passes when the token is active, migrations are applied and Workers is accessible", async () => {
     const f = mockFetch((url) => {
       if (url.includes("tokens/verify")) return ok({ status: "active" });
-      if (url.includes("/d1/")) return ok([{ results: [{ name: "0001_init.sql" }] }]);
+      if (url.includes("/d1/")) return ok([{ results: migrationFiles().map((name) => ({ name })) }]);
       if (url.includes("workers/scripts")) return ok([]);
       return { status: 200, body: {} }; // github rate_limit
     });
@@ -110,7 +110,7 @@ describe("checkRemote", () => {
   it("flags a token that can't access Workers (deploy only) and warns about a bad GitHub token", async () => {
     const f = mockFetch((url) => {
       if (url.includes("tokens/verify")) return ok({ status: "active" });
-      if (url.includes("/d1/")) return ok([{ results: [{ name: "0001_init.sql" }] }]);
+      if (url.includes("/d1/")) return ok([{ results: migrationFiles().map((name) => ({ name })) }]);
       if (url.includes("workers/scripts")) return { status: 403, body: { success: false, errors: [{ code: 10000, message: "Authentication error" }] } };
       return { status: 401, body: {} };
     });

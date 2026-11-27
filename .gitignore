@@ -30,3 +30,12 @@ npm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# build artifacts emitted by scripts/emit-static.tsx (never committed)
+/public/lists/
+/public/sitemaps/
+/public/data/
+/public/badge/
+/public/og/
+/public/search-index.json
+/public/sitemap.xml

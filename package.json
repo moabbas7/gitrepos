@@ -23,7 +23,9 @@
     "job:snapshot": "tsx jobs/snapshot.ts",
     "job:prune": "tsx jobs/rollup-and-prune.ts",
     "job:summaries": "tsx jobs/summaries.ts",
-    "build:snapshot": "tsx scripts/build-snapshot.ts"
+    "build:snapshot": "tsx scripts/build-snapshot.ts",
+    "build:static": "tsx scripts/emit-static.tsx",
+    "job:digests": "tsx jobs/digests.ts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.18",
@@ -41,6 +43,8 @@
     "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
+    "@fontsource/geist": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^24.19.2",
     "@types/react": "^19",

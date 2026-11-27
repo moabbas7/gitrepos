@@ -36,6 +36,8 @@ export const config = {
   trackedLimit: num("TRACKED_LIMIT", 5000),
   minDailyStars: num("MIN_DAILY_STARS", 3),
   maxPrebuiltRepos: num("MAX_PREBUILT_REPOS", 5000),
+  /** Static asset files per deploy we allow (Workers Free: 20,000). Same var as scripts/check-assets.ts. */
+  maxAssetFiles: num("MAX_ASSET_FILES", 18_000),
   summaryLimit: num("SUMMARY_LIMIT", 40),
   spamCheckLimit: num("SPAM_CHECK_LIMIT", 300),
   readmeLimit: num("README_LIMIT", 300),
