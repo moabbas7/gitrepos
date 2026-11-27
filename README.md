@@ -109,6 +109,12 @@ Every public page is prerendered from `.data/site.json` at build time. Pages nev
 - `/badge/featured.svg`, plus `/badge/<owner>/<name>.svg` for ranked repos only
 - `/og/repo/*.png` and `/og/page/*.png`: OG images rendered at build with `next/og`. They're cached in `.data/og-cache` by content hash (persisted with `actions/cache`), so each build only renders the ones that changed.
 
+**OG images never block a deploy.**
+- **Text:** OG text is reduced to characters in the bundled Latin fonts (`lib/og/text.ts`). Arabic, CJK and emoji used to make the renderer download fonts mid-build, and one of them crashed it.
+- **Caps:** each run renders at most `OG_MAX_RENDERS` (400) new images within `OG_TIME_BUDGET_S` (180 s), with a 15 s timeout per image. The most important pages render first.
+- **Fallbacks:** anything failed, timed out or deferred gets a copy of the shared image (`og/page/repo.png` or `og/page/default.png`, and as a last resort the committed `lib/og/fallback.png`). It's retried on the next run.
+- **Warnings:** failures show up as a workflow warning, never as a failure.
+
 **Badge fallback.** When a repo leaves the lists, its badge file disappears. The request then falls through to `app/badge/[owner]/[name]/route.ts`, which returns the generic badge (a constant string, cached for a day, no D1), so a README never shows a broken image.
 
 ### Stable pages and the page budget
@@ -234,6 +240,7 @@ In the repo, go to **Settings → Secrets and variables → Actions**.
 | `MAX_PREBUILT_REPOS` | `5000` |
 | `MAX_ASSET_FILES` | `18000` (drives the page budget and `cf:check`) |
 | `NEXT_PUBLIC_CF_BEACON_TOKEN` | empty (no analytics script) |
+| `OG_MAX_RENDERS` / `OG_TIME_BUDGET_S` | `400` / `180` (new OG images rendered per hourly run) |
 | `MIN_DAILY_STARS` | `3` |
 | `SUMMARY_LIMIT` | `40` |
 | `GEMINI_MODEL` | `gemini-3.5-flash-lite` |
@@ -286,6 +293,11 @@ The tests cover:
 - early-days readiness, landing pages, related repos, search index, sitemaps, badges, the CC0 export, SEO helpers
 - digests (ISO weeks, coverage, row picking, template intro)
 - emitted artifacts: an empty snapshot builds cleanly, and no README text ever reaches the snapshot or `public/`
+- OG images: text sanitising, render cap, time budget, per-image timeout, shared-image fallbacks, and a real render of non-Latin descriptions with no font downloads
+
+**CI** runs two jobs:
+- **Empty data:** lint, typecheck, tests, and an empty-data build.
+- **`build-realistic`:** seeds 600 repos (including Arabic, CJK and emoji descriptions), then runs the full `build:snapshot` → `build:static --strict-og` (cold cache, every image) → OpenNext → asset check path under time limits.
 
 ---
 

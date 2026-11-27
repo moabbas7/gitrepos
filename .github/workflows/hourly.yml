@@ -82,12 +82,18 @@ jobs:
         run: npm run build:snapshot
 
       # Lists, search index, sitemaps, /data exports, badges, OG images -> public/ (static assets).
+      # OG images never fail this step: failed/slow ones use a shared image and are retried next run.
       - name: Emit static artifacts
         if: env.CLOUDFLARE_API_TOKEN != '' && (github.event_name == 'schedule' || inputs.deploy)
+        timeout-minutes: 10
+        env:
+          OG_MAX_RENDERS: ${{ vars.OG_MAX_RENDERS || '400' }}
+          OG_TIME_BUDGET_S: ${{ vars.OG_TIME_BUDGET_S || '180' }}
         run: npm run build:static
 
       - name: Build site (OpenNext)
         if: env.CLOUDFLARE_API_TOKEN != '' && (github.event_name == 'schedule' || inputs.deploy)
+        timeout-minutes: 15
         run: |
           npm run cf:build
           npm run cf:check

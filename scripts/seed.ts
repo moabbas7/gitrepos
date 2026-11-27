@@ -31,6 +31,20 @@ const NOUNS = ["nebula", "comet", "relay", "lattice", "harbor", "ember", "quill"
 const SUFFIX = ["db", "kit", "cli", "ui", "agent", "sync", "flow", "lab", "js", "rs", "proxy", "studio"] as const;
 const TOPICS = ["ai-agents", "llm", "cli", "database", "devtools", "self-hosted", "react", "rust", "gamedev", "security", "observability", "vector-search", "terminal", "compiler", "webassembly", "automation", "privacy", "data-engineering", "mobile", "design-system"] as const;
 const WHAT = ["Embedded database", "Terminal UI toolkit", "Local-first sync engine", "Agent framework", "Static site generator", "Reverse proxy", "Log search engine", "Workflow runner", "Code formatter", "Game engine", "Password manager", "Feature-flag service"] as const;
+// Real descriptions aren't all Latin. These exercise the OG renderer's font handling (an Arabic
+// description crashed the first production OG build) and RTL/emoji text on pages.
+const INTL_DESCRIPTIONS = [
+  "مكتبة سريعة لمعالجة النصوص العربية",
+  "高性能的向量数据库，支持实时检索",
+  "日本語の形態素解析ライブラリ",
+  "🚀 Blazing fast bundler ✨ with zero config 🔥",
+  "✯ Star-studded CLI ↦ maps your shell history",
+  "ספריית רכיבים לממשקי משתמש",
+  "Быстрый HTTP-сервер на Rust",
+  "Café-grade crème brûlée recipes — naïve façade™",
+  "한국어 자연어 처리 도구",
+  "🦀",
+] as const;
 const HOW = ["with a tiny footprint", "that runs anywhere", "built for speed", "with first-class plugins", "you can self-host in minutes", "with zero config", "for teams that ship daily"] as const;
 
 interface SeedRepo extends RepoMeta {
@@ -64,7 +78,7 @@ function makeRepos(n: number): SeedRepo[] {
       id: 10_000_000 + i * 7919,
       owner,
       name,
-      description: `${pick(WHAT)} ${pick(HOW)}.`,
+      description: rnd() < 0.12 ? pick(INTL_DESCRIPTIONS) : `${pick(WHAT)} ${pick(HOW)}.`,
       language: LANGS[out.length % LANGS.length],
       topics,
       stars,
@@ -89,7 +103,9 @@ function makeRepos(n: number): SeedRepo[] {
 
 function main() {
   const remote = process.argv.includes("--remote");
-  const repos = makeRepos(80);
+  // --repos=N scales the seed (CI's realistic-volume build uses several hundred).
+  const nArg = process.argv.find((a) => a.startsWith("--repos="));
+  const repos = makeRepos(nArg ? Math.max(10, Number(nArg.split("=")[1]) || 80) : 80);
   const nowIso = NOW.toISOString();
   const sql: string[] = [];
 

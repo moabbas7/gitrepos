@@ -29,3 +29,39 @@ jobs:
         run: |
           npx tsx scripts/emit-static.tsx --empty --no-og
           npm run cf:build && npm run cf:check
+
+  # Production-shaped build: several hundred repos (incl. Arabic/CJK/emoji descriptions), the full
+  # build:snapshot -> build:static (cold OG cache, every image rendered, strict) -> Next ->
+  # OpenNext -> asset check path, under a time limit. The empty-data build above can't catch
+  # failures that only appear with real data volume or content.
+  build-realistic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SEED_REPOS: "600"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Local D1 + seed (${{ env.SEED_REPOS }} repos)
+        timeout-minutes: 5
+        run: |
+          npx wrangler d1 migrations apply gitrepos --local
+          npx tsx scripts/seed.ts --repos=$SEED_REPOS
+      - name: Build snapshot
+        timeout-minutes: 3
+        run: npm run build:snapshot
+      - name: Emit static artifacts (all OG images, strict)
+        timeout-minutes: 8
+        env:
+          OG_MAX_RENDERS: "100000"
+          OG_TIME_BUDGET_S: "420"
+        run: npx tsx scripts/emit-static.tsx --strict-og
+      - name: OpenNext build + asset limit check
+        timeout-minutes: 10
+        run: npm run cf:build && npm run cf:check
