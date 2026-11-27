@@ -24,5 +24,8 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      # No data in CI: emit empty artifacts so every page builds in its empty state.
       - name: OpenNext build + asset limit check
-        run: npm run cf:build && npm run cf:check
+        run: |
+          npx tsx scripts/emit-static.tsx --empty --no-og
+          npm run cf:build && npm run cf:check

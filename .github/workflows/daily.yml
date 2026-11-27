@@ -1,4 +1,4 @@
-name: daily (snapshot → rollup-and-prune → summaries)
+name: daily (snapshot → rollup-and-prune → summaries → digests)
 
 on:
   schedule:
@@ -46,6 +46,9 @@ jobs:
       - name: Summaries (Gemini + template fallback; never fails the run)
         if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
         run: npm run job:summaries
+      - name: Digests (weekly + monthly, idempotent; Gemini intro with template fallback)
+        if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
+        run: npm run job:digests
       - name: Publish data branch
         if: ${{ !cancelled() && steps.preflight.outcome == 'success' }}
         run: npx tsx jobs/data.ts publish "daily $(date -u +%Y-%m-%d)"

@@ -30,6 +30,7 @@ env:
   TRACKED_LIMIT: ${{ vars.TRACKED_LIMIT || '5000' }}
   MAX_PREBUILT_REPOS: ${{ vars.MAX_PREBUILT_REPOS || '5000' }}
   NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+  NEXT_PUBLIC_CF_BEACON_TOKEN: ${{ vars.NEXT_PUBLIC_CF_BEACON_TOKEN }}
   DATA_PUSH: "1"
 
 jobs:
@@ -68,9 +69,22 @@ jobs:
           key: history-${{ github.run_id }}
           restore-keys: history-
 
+      - name: Restore OG image cache
+        if: env.CLOUDFLARE_API_TOKEN != '' && (github.event_name == 'schedule' || inputs.deploy)
+        uses: actions/cache@v6
+        with:
+          path: .data/og-cache
+          key: og-${{ github.run_id }}
+          restore-keys: og-
+
       - name: Build snapshot
         if: env.CLOUDFLARE_API_TOKEN != '' && (github.event_name == 'schedule' || inputs.deploy)
         run: npm run build:snapshot
+
+      # Lists, search index, sitemaps, /data exports, badges, OG images -> public/ (static assets).
+      - name: Emit static artifacts
+        if: env.CLOUDFLARE_API_TOKEN != '' && (github.event_name == 'schedule' || inputs.deploy)
+        run: npm run build:static
 
       - name: Build site (OpenNext)
         if: env.CLOUDFLARE_API_TOKEN != '' && (github.event_name == 'schedule' || inputs.deploy)

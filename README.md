@@ -4,8 +4,7 @@ Trending GitHub repositories, updated every hour. It's the website for the [@git
 
 Everything runs on free tiers that don't need a credit card: **Cloudflare Workers + D1**, **GitHub Actions**, a **`data` branch** in this repo, and the **Gemini** free tier.
 
-> Status: prompt 1 of 3 (foundation + data). Public pages, payments, admin and Instagram come in prompts 2–3.
-> `/design` is a temporary page for reviewing the design system.
+> Status: prompt 2 of 3 (public site + SEO). Promote page, payments, admin and Instagram come in prompt 3.
 
 ---
 
@@ -22,7 +21,8 @@ Everything runs on free tiers that don't need a credit card: **Cloudflare Worker
 │ GraphQL+Search│   │ real star counts, spam guard│  └────────────────────┘   │  job_runs, ...  │
 └──────────────┘   └───────────────────────────┘                             └────────┬────────┘
                                                                                       │ build-snapshot
-                         opennextjs-cloudflare build ◀─── .data/site.json ◀────────────┘
+          opennextjs-cloudflare build ◀── public/ artifacts ◀── .data/site.json ◀──┘
+                                  │        (emit-static)        (build-snapshot)
                                   │
                                   ▼
                  Cloudflare Workers static assets: prerendered pages (free, unlimited requests)
@@ -52,11 +52,12 @@ Everything runs on free tiers that don't need a credit card: **Cloudflare Worker
 |---|---|---|---|
 | `ingest-gharchive` | hourly :17 | Stream the hour's file and count WatchEvents per repo into `raw/hourly/`. Catches up to 48h back | 0 |
 | `rank` | hourly, after ingest | Fresh stars for ~1,200 movers (GraphQL, 100/query), then Today/Week/Month × Trending/Rising/New, HOT = top 1%, spam guard. One row per list | ~6k |
-| build + deploy | hourly, after rank | `build-snapshot` → OpenNext build → asset check → deploy | 0 |
+| build + deploy | hourly, after rank | `build-snapshot` → `build:static` → OpenNext build → asset check → deploy | a few (`first_published_at`) |
 | `refresh-metadata` | every 6h :41 | Search discovery, GraphQL for the tracked set, spam guard (top 300), READMEs. Unchanged rows are skipped | ≤20k |
 | `snapshot` | daily 01:20 | Daily file from star history, `repo_daily` rows, `ranking_history` | ~6k |
 | `rollup-and-prune` | daily, after snapshot | Delete hourly files >48h and daily files >35d. Prune `repo_daily` >400d, stale repos and old `job_runs`. Recompute topics | ~1–6k |
 | `summaries` | daily, after prune | Gemini summaries for the top 40 repos and template summaries for the rest. Never fails | ≤1k |
+| `digests` | daily, after summaries | Weekly digest for the last full ISO week, monthly for the last full month, if missing and fully covered by tracking. Gemini intro, template fallback | ≤2 |
 
 Every job writes a row to `job_runs` with start, end, status, rows read and written, DB size and any error.
 - **Pre-flight.** Each workflow starts with `scripts/preflight.ts`, which stops the run with one clear message (in the log and the run summary) if:
@@ -82,6 +83,62 @@ Every job writes a row to `job_runs` with start, end, status, rows read and writ
   - spam: more than 80% of a sample of 50 recent stargazers were accounts less than 7 days old when they starred
 
 ---
+
+## Public site (prompt 2)
+
+Every public page is prerendered from `.data/site.json` at build time. Pages never query D1, and every dynamic route uses `dynamicParams = false`.
+
+| Route | What |
+|---|---|
+| `/` | Trending feed: Today / Week / Month × Trending / Rising / New, language filter, load more, live "updated" dot |
+| `/rising`, `/new` | The Rising and New lists |
+| `/languages`, `/language/[lang]` | Per-language lists (the 25 languages the pipeline ranks) |
+| `/topics`, `/topic/[topic]` | Topics with ≥ 3 built repos, up to 300 |
+| `/repo/[owner]/[name]` | Stats, star chart, summary, topics, similar repos, README badge, "View on GitHub" |
+| `/digests`, `/weekly/[week]`, `/monthly/[month]` | Digest archive and pages |
+| `/methodology`, `/about`, `/privacy`, `/terms`, `/data`, `/search` | Content, CC0 export, search results |
+
+### Static artifacts (`npm run build:static`)
+
+`scripts/emit-static.tsx` writes these into `public/` (gitignored) after `build-snapshot`. They are served as plain static assets, which use no Worker requests:
+
+- `/lists/<type>-<period>-<lang>.json`: data for tabs, the language filter and load more
+- `/search-index.json`: the ⌘K palette and `/search`, searched entirely in the browser
+- `/sitemap.xml` (index) and `/sitemaps/*.xml` (pages, languages, topics, digests, repos; split at 10k URLs)
+- `/data/latest.{json,csv}` and `/data/daily/<date>.{json,csv}` (30 days): the CC0 export
+- `/badge/featured.svg`, plus `/badge/<owner>/<name>.svg` for ranked repos only
+- `/og/repo/*.png` and `/og/page/*.png`: OG images rendered at build with `next/og`. They're cached in `.data/og-cache` by content hash (persisted with `actions/cache`), so each build only renders the ones that changed.
+
+**Badge fallback.** When a repo leaves the lists, its badge file disappears. The request then falls through to `app/badge/[owner]/[name]/route.ts`, which returns the generic badge (a constant string, cached for a day, no D1), so a README never shows a broken image.
+
+### Stable pages and the page budget
+
+`jobs/lib/pages.ts` (pure logic in `lib/site-data/select-pages.ts`) decides which repo pages get built, in priority order:
+
+1. **pinned**: `page_pins` (paid promos in prompt 3, manual pins). Always built, even past the budget.
+2. **ranked**: in any current list.
+3. **published**: had a page before. The page stays up with a "No longer trending" note, ordered by recent stars.
+4. **fill**: other tracked repos, by weekly gains.
+
+- **Budget:** `(MAX_ASSET_FILES − 3,000 reserve − rank badges) ÷ 2 files per repo` (the prerendered page plus its OG image), capped at `MAX_PREBUILT_REPOS`.
+- **Retired pages:** published repos below the line are retired. Their URL shows the designed 404 with a link to the repo on GitHub.
+- **First publication:** `build-snapshot` sets `repos.first_published_at` once, the first time a repo's page is built. This runs as a `job_runs` row, budget-checked.
+- **Prune:** `rollup-and-prune` never deletes a repo whose page is still built.
+- **Prompt 3:** to force a paid repo in, insert into `page_pins`.
+
+### Early days
+
+`lib/site-data/readiness.ts` compares tracking time (from the first successful `rank` run) with what each period needs (Today 24h, Week 7d, Month 30d). Until a period is ready, lists show "Collecting star history" notes. Empty lists, topics, digests, `/data` and short star charts have designed empty states, and an empty snapshot still builds a complete site.
+
+### Analytics, ads
+
+- **Analytics:** Cloudflare Web Analytics is cookieless. It loads only when the `NEXT_PUBLIC_CF_BEACON_TOKEN` Actions variable is set.
+- **Ads:** `AdSlot` placeholders sit in the feed (after #4, then every 7th), the sidebar and the repo page. They stay collapsed until AdSense is built (`ADSENSE_ENABLED`).
+
+### Requests and size
+
+- **Worker requests:** pages are prerendered into the OpenNext cache and served by the Worker through cache interception. That's very little CPU, but **each page view counts toward Workers Free's 100k requests/day**. Lists, search, OG images, badges and data files are true static assets and don't count. Links in lists use `prefetch={false}`, so scrolling a list doesn't fire RSC prefetches.
+- **Page size:** a repo page is about 110 KB of HTML (about 15 KB gzipped).
 
 ## Free-tier budget
 
@@ -111,7 +168,9 @@ npm ci
 cp .env.example .env.local        # fill in later; everything works with seed data first
 npm run db:migrate                # apply migrations to the local D1 (.wrangler/)
 npm run db:seed                   # fictional repos, 90 days of history, rankings, digests
-npm run dev                       # http://localhost:3000/design
+npm run build:snapshot            # .data/site.json from the local D1
+npm run build:static              # lists, search index, sitemaps, badges, OG images -> public/
+npm run dev                       # http://localhost:3000
 npm run preview                   # same build running in workerd (the real Workers runtime) on :8787
 ```
 
@@ -173,6 +232,8 @@ In the repo, go to **Settings → Secrets and variables → Actions**.
 | `D1_DAILY_WRITE_BUDGET` | `80000` |
 | `TRACKED_LIMIT` | `5000` |
 | `MAX_PREBUILT_REPOS` | `5000` |
+| `MAX_ASSET_FILES` | `18000` (drives the page budget and `cf:check`) |
+| `NEXT_PUBLIC_CF_BEACON_TOKEN` | empty (no analytics script) |
 | `MIN_DAILY_STARS` | `3` |
 | `SUMMARY_LIMIT` | `40` |
 | `GEMINI_MODEL` | `gemini-3.5-flash-lite` |
@@ -195,7 +256,9 @@ npm run job:metadata                         # needs GITHUB_TOKEN
 npm run job:snapshot
 npm run job:prune
 npm run job:summaries                        # Gemini if GEMINI_API_KEY is set, otherwise templates
+npm run job:digests                          # weekly/monthly digests (idempotent)
 npm run build:snapshot                       # .data/site.json for the site build
+npm run build:static                         # public/ artifacts (add --no-og to skip OG images)
 ```
 
 - **Which DB:** jobs use the **remote** D1 when `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` and `D1_DATABASE_ID` are all set. Otherwise they use the local D1.
@@ -219,6 +282,10 @@ The tests cover:
 - the D1 REST client: parameter/statement chunking, retries, budget
 - the Gemini fallback paths
 - the schema and seed, loaded into the real migrations on `node:sqlite`
+- page selection and stable pages (priority, pins, budget, retirement, prune protection, first publication)
+- early-days readiness, landing pages, related repos, search index, sitemaps, badges, the CC0 export, SEO helpers
+- digests (ISO weeks, coverage, row picking, template intro)
+- emitted artifacts: an empty snapshot builds cleanly, and no README text ever reaches the snapshot or `public/`
 
 ---
 
@@ -241,13 +308,15 @@ The data layer doesn't change.
 ## Project layout
 
 ```
-app/                  Next.js App Router (temporary /design page in this prompt)
+app/                  Next.js App Router: public pages, robots, badge fallback route
 components/gr/        GitRepos design-system components (see DESIGN.md)
 components/ui/        shadcn/ui primitives
 lib/db/               Db interface, D1/sqlite adapters, public + server-only queries
+lib/site-data/        snapshot types + pure page logic (selection, readiness, SEO, sitemap, search, badges)
+lib/og/               OG image templates (rendered at build)
 jobs/                 pipeline jobs (tsx) and jobs/lib shared logic
 migrations/           D1 schema
-scripts/              seed, build snapshot, asset-limit check
+scripts/              seed, build snapshot, emit static artifacts, asset-limit check
 tests/                vitest
 .github/workflows/    hourly, metadata, daily, ci, keepalive
 DESIGN.md             design system (colours from brand/logo.png)
