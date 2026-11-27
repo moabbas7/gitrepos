@@ -1,5 +1,5 @@
-import { useId } from "react";
 import { cn } from "@/lib/utils";
+import { GRAD } from "./svg-defs";
 
 /**
  * Inline-SVG sparkline (no chart library, zero JS). Gradient stroke; draws in when an ancestor
@@ -16,7 +16,6 @@ export function Sparkline({
   height?: number;
   className?: string;
 }) {
-  const id = useId().replace(/:/g, "");
   if (values.length < 2) {
     return <svg aria-hidden width={width} height={height} className={className} />;
   }
@@ -31,23 +30,12 @@ export function Sparkline({
 
   return (
     <svg aria-hidden width={width} height={height} viewBox={`0 0 ${width} ${height}`} className={cn("shrink-0 overflow-visible", className)}>
-      <defs>
-        <linearGradient id={`s${id}`} x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0%" stopColor="var(--gr-g1)" />
-          <stop offset="50%" stopColor="var(--gr-g2)" />
-          <stop offset="100%" stopColor="var(--gr-g3)" />
-        </linearGradient>
-        <linearGradient id={`a${id}`} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="var(--gr-g2)" stopOpacity={0.22} />
-          <stop offset="100%" stopColor="var(--gr-g2)" stopOpacity={0} />
-        </linearGradient>
-      </defs>
-      <path d={area} fill={`url(#a${id})`} className="gr-spark-area" />
+      <path d={area} fill={`url(#${GRAD.area})`} className="gr-spark-area" />
       <path
         d={line}
         pathLength={1}
         fill="none"
-        stroke={`url(#s${id})`}
+        stroke={`url(#${GRAD.h})`}
         strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"

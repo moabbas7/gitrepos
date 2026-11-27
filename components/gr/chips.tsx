@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { useId, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { compactNumber, PERIOD_LABEL, type Period } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { GRAD } from "./svg-defs";
 
 /** Language: mono text only — no coloured dot (DESIGN.md §4). */
 export function LanguageChip({ language, className }: { language: string | null; className?: string }) {
@@ -17,7 +18,7 @@ export function TopicTag({ topic, href, className }: { topic: string; href?: str
     className,
   );
   return href ? (
-    <Link href={href} className={cls}>
+    <Link href={href} prefetch={false} className={cls}>
       #{topic}
     </Link>
   ) : (
@@ -27,17 +28,9 @@ export function TopicTag({ topic, href, className }: { topic: string; href?: str
 
 /** Small upward arrow filled with the brand gradient. */
 export function GradientArrow({ size = 9, className }: { size?: number; className?: string }) {
-  const id = `ga${useId().replace(/:/g, "")}`;
   return (
     <svg aria-hidden width={size} height={size} viewBox="0 0 10 10" className={cn("shrink-0", className)}>
-      <defs>
-        <linearGradient id={id} x1="0" x2="1" y1="1" y2="0">
-          <stop offset="0" stopColor="var(--gr-g1)" />
-          <stop offset="0.5" stopColor="var(--gr-g2)" />
-          <stop offset="1" stopColor="var(--gr-g3)" />
-        </linearGradient>
-      </defs>
-      <path d="M5 0.8 L9.6 9.2 L0.4 9.2 Z" fill={`url(#${id})`} />
+      <path d="M5 0.8 L9.6 9.2 L0.4 9.2 Z" fill={`url(#${GRAD.up})`} />
     </svg>
   );
 }

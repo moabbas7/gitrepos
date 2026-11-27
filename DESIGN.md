@@ -155,6 +155,8 @@ All components live in `components/gr/*` and keep their public props.
   4. ≤ 4 topic tags
   5. language · ★ stars · ⑂ forks (mono white/50) · GrowthPill · sparkline
 
+- **`crown` / `showRank` (prompt 2):** only a Trending feed sets `crown`, which adds the rotating ring and TRENDING badge to its #1. Topic, related and digest lists never crown their first card. Related repos hide the rank.
+
 **SponsorCard:** same glass frame and spotlight as RepoCard, with a SPONSORED badge. Links use `rel="sponsored nofollow noopener"`. The `accent` prop is accepted and ignored. The empty state is a dashed white/10 frame reading "Advertise here".
 
 **FilterTabs:** a white/3 track with a 1px white/8 hairline, inactive labels at white/50, the active label in white, and a **sliding 2px gradient underline** shared through `layoutId`.
@@ -162,6 +164,8 @@ All components live in `components/gr/*` and keep their public props.
 **Skeletons:** white/4 blocks with a shimmer band (a white/6 gradient) translated across, transform only.
 
 **AdSlot:** a fixed-height empty box (feed 250 / sidebar 600 / inline 280). It renders nothing.
+
+**Shared SVG gradients:** `SvgDefs` (rendered once in the root layout) defines the brand gradients. Growth arrows, badge glyphs and sparklines reference them by id instead of repeating `<defs>` on every icon.
 
 **Motion primitives**
 - **`Aurora`:** a slow gradient glow behind the hero. Three blurred radial blobs drift over a 24–32s cycle. Pure CSS transform.

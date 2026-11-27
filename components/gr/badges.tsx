@@ -1,6 +1,7 @@
-import { useId, type CSSProperties, type ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { Accent } from "@/lib/accents";
 import { cn } from "@/lib/utils";
+import { GRAD } from "./svg-defs";
 
 const base =
   "inline-flex h-[22px] items-center gap-1 rounded-full px-2 font-mono text-[11px] font-medium uppercase tracking-[0.06em] leading-none whitespace-nowrap";
@@ -13,17 +14,9 @@ export function softAccentStyle(_color?: string): CSSProperties {
 
 /** Tiny gradient glyphs (the only colour on secondary badges). */
 function GradGlyph({ d, size = 9 }: { d: string; size?: number }) {
-  const id = `gb${useId().replace(/:/g, "")}`;
   return (
     <svg aria-hidden width={size} height={size} viewBox="0 0 10 10" className="shrink-0">
-      <defs>
-        <linearGradient id={id} x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0" stopColor="var(--gr-g1)" />
-          <stop offset="0.5" stopColor="var(--gr-g2)" />
-          <stop offset="1" stopColor="var(--gr-g3)" />
-        </linearGradient>
-      </defs>
-      <path d={d} fill={`url(#${id})`} />
+      <path d={d} fill={`url(#${GRAD.down})`} />
     </svg>
   );
 }

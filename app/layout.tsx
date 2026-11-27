@@ -1,6 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Inter, JetBrains_Mono } from "next/font/google";
-import { SITE_URL } from "@/lib/site";
+import { JsonLd } from "@/components/gr/json-ld";
+import { SearchHost } from "@/components/gr/search-host";
+import { SiteFooter } from "@/components/gr/site-footer";
+import { SiteHeader } from "@/components/gr/site-header";
+import { SvgDefs } from "@/components/gr/svg-defs";
+import { CF_BEACON_TOKEN, SITE_URL } from "@/lib/site";
+import { STATIC_COPY } from "@/lib/site-data/copy";
+import { pageOgPath, websiteJsonLd } from "@/lib/site-data/seo";
 import "./globals.css";
 
 // All fonts: latin subset, swap, automatic size-adjusted fallback => no layout shift.
@@ -10,9 +17,11 @@ const jetbrains = JetBrains_Mono({ variable: "--font-jetbrains", subsets: ["lati
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: "GitRepos: trending GitHub repositories", template: "%s · GitRepos" },
-  description:
-    "The GitHub repositories developers are starring right now, ranked hourly from real star counts. From the team behind @gitrepos.si.",
+  title: { default: STATIC_COPY.home.title, template: "%s · GitRepos" },
+  description: STATIC_COPY.home.description,
+  applicationName: "GitRepos",
+  openGraph: { siteName: "GitRepos", type: "website", images: [{ url: pageOgPath("default"), width: 1200, height: 630 }] },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {
@@ -34,7 +43,22 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: JS_FLAG }} />
       </head>
       <body className="min-h-full flex flex-col">
-        {children}
+        <SvgDefs />
+        <SiteHeader />
+        <main id="main" className="flex flex-1 flex-col">
+          {children}
+        </main>
+        <SiteFooter />
+        <SearchHost />
+        <JsonLd data={websiteJsonLd()} />
+        {CF_BEACON_TOKEN && (
+          // Cloudflare Web Analytics: cookieless, no personal data (see /privacy).
+          <script
+            defer
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon={JSON.stringify({ token: CF_BEACON_TOKEN })}
+          />
+        )}
       </body>
     </html>
   );

@@ -17,13 +17,23 @@ import { SpotlightCard } from "./spotlight";
 export function RepoCard({
   repo,
   period = "today",
+  topicPages,
+  crown = false,
+  showRank = true,
   className,
 }: {
   repo: RepoCardData;
   period?: Period;
+  /** #1 of a Trending list: animated gradient border + TRENDING badge. */
+  crown?: boolean;
+  showRank?: boolean;
+  /** Topics that have a /topic page; those tags become links. */
+  topicPages?: readonly string[];
   className?: string;
 }) {
-  const isFirst = repo.rank === 1;
+  const isFirst = crown && repo.rank === 1;
+  // Align rows under the name: rank column (28px) + avatar (32px) + gaps.
+  const indent = showRank ? "pl-10 sm:pl-[4.75rem]" : "pl-11";
   const href = `/repo/${repo.owner}/${repo.name}`;
   const ghUrl = `https://github.com/${repo.owner}/${repo.name}`;
 
@@ -31,10 +41,12 @@ export function RepoCard({
     <SpotlightCard as="article" ringHover={!isFirst} className={cn("flex flex-col gap-3 rounded-2xl p-4 sm:p-5", className)}>
       {isFirst && <span aria-hidden className="gr-ring-spin" />}
       <div className="flex items-start gap-3">
-        <span className="gr-num w-7 shrink-0 pt-1.5 text-xs text-fg/50">
-          <span className="sr-only">Rank </span>
-          {String(repo.rank).padStart(2, "0")}
-        </span>
+        {showRank && (
+          <span className="gr-num w-7 shrink-0 pt-1.5 text-xs text-fg/50">
+            <span className="sr-only">Rank </span>
+            {String(repo.rank).padStart(2, "0")}
+          </span>
+        )}
         <Image
           src={repo.avatarUrl}
           alt=""
@@ -46,7 +58,7 @@ export function RepoCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <h3 className="m-0 text-base">
-              <Link href={href} className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none">
+              <Link href={href} prefetch={false} className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none">
                 <RepoName owner={repo.owner} name={repo.name} />
               </Link>
             </h3>
@@ -69,14 +81,14 @@ export function RepoCard({
       </div>
 
       {repo.topics.length > 0 && (
-        <div className="relative z-10 flex flex-wrap gap-1.5 pl-10 sm:pl-[4.75rem]">
+        <div className={cn("relative z-10 flex flex-wrap gap-1.5", indent)}>
           {repo.topics.slice(0, 4).map((t, i) => (
-            <TopicTag key={t} topic={t} className={cn(i >= 2 && "hidden sm:inline-flex", i >= 3 && "sm:hidden md:inline-flex")} />
+            <TopicTag key={t} topic={t} href={topicPages?.includes(t) ? `/topic/${t}` : undefined} className={cn(i >= 2 && "hidden sm:inline-flex", i >= 3 && "sm:hidden md:inline-flex")} />
           ))}
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pl-10 sm:pl-[4.75rem]">
+      <div className={cn("flex flex-wrap items-center gap-x-4 gap-y-2", indent)}>
         <LanguageChip language={repo.language} />
         <span className="gr-num inline-flex items-center gap-1 text-xs text-fg/50" title={`${repo.stars} stars`}>
           <Star className="size-3.5" aria-hidden />
